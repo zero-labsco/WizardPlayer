@@ -8,6 +8,12 @@ import '../player/video_player_impl.dart';
 import '../player/playback_state.dart';
 
 /// 视频播放器 Widget
+///
+/// 两套布局：
+/// 1. 全屏模式 (isFullscreen == true)
+///    保持 overlay 设计：控件覆盖在视频上
+/// 2. 非全屏模式 (isFullscreen == false)
+///    视频在外边框内，返回按钮在外边框左上角，进度条/时间/全屏按钮在外边框下方
 class WizardPlayerWidget extends StatefulWidget {
   final WizardPlayer? player;
   final String? initialUri;
@@ -39,7 +45,6 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   Duration? _dragStartPosition;
   String _dragSeekText = '';
   Timer? _hideSeekTextTimer;
-  StreamSubscription<PlaybackState>? _playbackStateSubscription;
 
   @override
   void initState() {
@@ -48,21 +53,14 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
     _initPlayer();
   }
 
-  /// 当外部 widget.player 变化时，更新内部 _player 引用
   @override
   void didUpdateWidget(WizardPlayerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.player != null && widget.player != _player) {
-      // 如果是 widget 自己创建的 player，释放它
       if (oldWidget.player == null) {
         _player.release();
       }
       _player = widget.player!;
-      // 重新订阅新 player 的状态变化
-      _playbackStateSubscription?.cancel();
-      _playbackStateSubscription = _player.playbackState.listen((state) {
-        if (mounted) setState(() {});
-      });
     }
   }
 
@@ -74,25 +72,16 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
         }
       });
     }
-    // 订阅播放状态变化，强制 widget rebuild 以更新视频显示
-    _playbackStateSubscription ??= _player.playbackState.listen((state) {
-      if (mounted) setState(() {});
-    });
   }
 
-  /// 动态获取 VideoPlayerController（不缓存，避免引用失效问题）
   VideoPlayerController? _getController() {
-    if (_player is VideoPlayerWizard) {
-      return (_player).getPlatformPlayer<VideoPlayerController>();
-    }
-    return null;
+    return _player.getPlatformPlayer<VideoPlayerController>();
   }
 
   void _toggleControls() {
     setState(() {
       _controlsVisible = !_controlsVisible;
     });
-
     if (_controlsVisible) {
       _startHideControlsTimer();
     } else {
@@ -120,10 +109,6 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   void dispose() {
     _cancelHideControlsTimer();
     _cancelHideSeekTextTimer();
-    // 取消订阅（如果存在），避免内存泄漏
-    _playbackStateSubscription?.cancel();
-    _playbackStateSubscription = null;
-    // 只有 widget 自己创建的播放器才释放
     if (widget.player == null) {
       _player.release();
     }
@@ -132,6 +117,32 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isFullscreenMode = widget.isFullscreen?.call() ?? false;
+
+    // 用 Obx 监听播放状态：controller 从 null 变为就绪时会触发重建
+    return Obx(() {
+      // 每次状态变化时重新获取 controller
+      final controller = _getController();
+      _player.playbackState.value; // 监听，触发重建
+
+      if (isFullscreenMode) {
+        // ══════════════════════════════════════════════════════════
+        // 全屏模式：overlay 布局（保持当前设计，不做任何改动）
+        // ══════════════════════════════════════════════════════════
+        return _buildFullscreenLayout(controller);
+      }
+
+      // ══════════════════════════════════════════════════════════
+      // 非全屏模式：视频在留白区域内，控件在下方
+      // ══════════════════════════════════════════════════════════
+      return _buildCompactLayout(controller);
+    });
+  }
+
+  // ───────────────────────────────────────────────────
+  // 全屏模式：SizedBox.expand → Stack → overlay
+  // ───────────────────────────────────────────────────
+  Widget _buildFullscreenLayout(VideoPlayerController? controller) {
     return GestureDetector(
       onTap: widget.showControls ? _toggleControls : null,
       onDoubleTap: () {
@@ -142,66 +153,386 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
           _player.resume();
         }
       },
-      onHorizontalDragStart: (details) {
-        if (!widget.showControls) return;
-        _isHorizontalDragging = true;
-        _horizontalDragDelta = 0;
-        _dragStartPosition = _player.currentPosition.value;
-        _cancelHideSeekTextTimer();
-        setState(() {});
-      },
-      onHorizontalDragUpdate: (details) {
-        if (!widget.showControls || !_isHorizontalDragging) return;
-        _horizontalDragDelta += details.delta.dx;
-        final screenWidth = context.size?.width ?? 1.0;
-        final secondsDelta = (_horizontalDragDelta / screenWidth) * 60;
-        final newPosition =
-            _dragStartPosition! + Duration(seconds: secondsDelta.toInt());
-        final total = _player.duration.value;
-        final clampedPosition = Duration(
-          milliseconds: newPosition.inMilliseconds.clamp(
-            0,
-            total.inMilliseconds,
+      onHorizontalDragStart: _onHorizontalDragStart,
+      onHorizontalDragUpdate: _onHorizontalDragUpdate,
+      onHorizontalDragEnd: _onHorizontalDragEnd,
+      child: SizedBox.expand(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildVideoSurface(controller),
+            // 黑色占位（controller 未就绪时
+            if (controller == null || !controller.value.isInitialized)
+              Container(
+                color: Colors.black,
+                child: const Center(
+                  child: Icon(
+                    Icons.play_circle_outline,
+                    size: 64,
+                    color: Colors.white30,
+                  ),
+                ),
+              ),
+            // Loading
+            Obx(() {
+              if (_player.isBuffering.value ||
+                  _player.playbackState.value == PlaybackState.loading) {
+                return Container(
+                  color: Colors.black26,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+            // 快进提示
+            if (_isHorizontalDragging) _buildSeekIndicator(),
+            // 控制栏 overlay
+            if (widget.showControls) _buildFullscreenControlsOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ───────────────────────────────────────────────────
+  // 非全屏模式：视频(带留白) + 控件区两行（进度条在上，按钮在下）
+  // ───────────────────────────────────────────────────
+  Widget _buildCompactLayout(VideoPlayerController? controller) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ─── 视频区域：水平留白 + 16:9比例 + 圆角裁剪 + 手势 ───
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.black,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: GestureDetector(
+                onTap: _toggleControls,
+                onDoubleTap: () {
+                  if (_player.playbackState.value == PlaybackState.playing) {
+                    _player.pause();
+                  } else {
+                    _player.resume();
+                  }
+                },
+                onHorizontalDragStart: _onHorizontalDragStart,
+                onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                onHorizontalDragEnd: _onHorizontalDragEnd,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 视频画面：按原始比例居中显示（不会拉伸填充）
+                    _buildVideoSurface(controller),
+                    // Loading
+                    Obx(() {
+                      if (_player.isBuffering.value ||
+                          _player.playbackState.value ==
+                              PlaybackState.loading) {
+                        return Container(
+                          color: Colors.black26,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
+                    // 快进提示
+                    if (_isHorizontalDragging) _buildSeekIndicator(),
+                    // 返回按钮：视频区域左上角
+                    if (_controlsVisible)
+                      Positioned(
+                        top: 6,
+                        left: 6,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                          iconSize: 24,
+                          onPressed: () {
+                            Navigator.of(context).maybePop();
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        );
-        final diff = clampedPosition - _dragStartPosition!;
-        final sign = diff.isNegative ? '-' : '+';
-        _dragSeekText =
-            '$sign${_formatDuration(diff.abs())} / ${_formatDuration(clampedPosition)}';
-        setState(() {});
-      },
-      onHorizontalDragEnd: (details) {
-        if (!widget.showControls || !_isHorizontalDragging) return;
-        _isHorizontalDragging = false;
-        final screenWidth = context.size?.width ?? 1.0;
-        final secondsDelta = (_horizontalDragDelta / screenWidth) * 60;
-        final newPosition =
-            _dragStartPosition! + Duration(seconds: secondsDelta.toInt());
-        final total = _player.duration.value;
-        final clampedPosition = Duration(
-          milliseconds: newPosition.inMilliseconds.clamp(
-            0,
-            total.inMilliseconds,
+        ),
+        // ─── 控件行1：进度条（占满整行宽度） ───
+        SizedBox(
+          height: 28,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildProgressBar(),
           ),
-        );
-        _player.seekTo(clampedPosition);
-        _startHideSeekTextTimer();
-        setState(() {});
-      },
+        ),
+        // ─── 控件行2：播放/暂停、音量、倍速、时间、全屏按钮 ───
+        if (_controlsVisible)
+          SizedBox(
+            height: 48,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // 播放/暂停
+                  Obx(
+                    () => IconButton(
+                      icon: Icon(
+                        _player.playbackState.value == PlaybackState.playing
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                      ),
+                      iconSize: 28,
+                      onPressed: () {
+                        if (_player.playbackState.value ==
+                            PlaybackState.playing) {
+                          _player.pause();
+                        } else {
+                          _player.resume();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildVolumeControl(),
+                  const SizedBox(width: 4),
+                  _buildSpeedControl(),
+                  const Spacer(),
+                  Obx(() {
+                    final position = _player.currentPosition.value;
+                    final total = _player.duration.value;
+                    return Text(
+                      '${_formatDuration(position)} / ${_formatDuration(total)}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: const Icon(Icons.fullscreen, color: Colors.white),
+                    iconSize: 24,
+                    onPressed: widget.onFullscreen,
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ───────────────────────────────────────────────────
+  // 视频画面：只要 controller 存在就渲染 VideoPlayer
+  // ───────────────────────────────────────────────────
+  Widget _buildVideoSurface(VideoPlayerController? controller) {
+    if (controller != null) {
+      return ValueListenableBuilder<VideoPlayerValue>(
+        valueListenable: controller,
+        builder: (context, value, child) {
+          final double ratio = value.isInitialized && value.aspectRatio > 0
+              ? value.aspectRatio
+              : 16 / 9;
+          return Center(
+            child: AspectRatio(
+              aspectRatio: ratio,
+              child: VideoPlayer(controller),
+            ),
+          );
+        },
+      );
+    }
+    return Container(color: Colors.black);
+  }
+
+  // ───────────────────────────────────────────────────
+  // 全屏模式的控制栏 overlay（保持原有 overlay 样式）
+  // ───────────────────────────────────────────────────
+  Widget _buildFullscreenControlsOverlay() {
+    return AnimatedOpacity(
+      opacity: _controlsVisible ? 1.0 : 0.0,
+      duration: const Duration(milliseconds: 300),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 视频画面（动态获取 controller，不缓存）
-          _buildVideoPlayer(),
-
-          // 加载指示器
-          _buildLoadingIndicator(),
-
-          // 滑动快进/快退提示
-          if (_isHorizontalDragging) _buildSeekIndicator(),
-
-          // 控制栏
-          if (widget.showControls) _buildControlsOverlay(),
+          // 顶部控制栏
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        iconSize: 28,
+                        onPressed: () {
+                          widget.onFullscreen?.call();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // 中央播放控制
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.replay_10, color: Colors.white),
+                    iconSize: 48,
+                    onPressed: () {
+                      final newPosition =
+                          _player.currentPosition.value -
+                          const Duration(seconds: 10);
+                      _player.seekTo(
+                        newPosition < Duration.zero
+                            ? Duration.zero
+                            : newPosition,
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 32),
+                  Obx(
+                    () => IconButton(
+                      icon: Icon(
+                        _player.playbackState.value == PlaybackState.playing
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        color: Colors.white,
+                      ),
+                      iconSize: 72,
+                      onPressed: () {
+                        if (_player.playbackState.value ==
+                            PlaybackState.playing) {
+                          _player.pause();
+                        } else {
+                          _player.resume();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 32),
+                  IconButton(
+                    icon: const Icon(Icons.forward_10, color: Colors.white),
+                    iconSize: 48,
+                    onPressed: () {
+                      final newPosition =
+                          _player.currentPosition.value +
+                          const Duration(seconds: 10);
+                      _player.seekTo(
+                        newPosition > _player.duration.value
+                            ? _player.duration.value
+                            : newPosition,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 底部控制区域
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withValues(alpha: 0.4),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          _buildVolumeControl(),
+                          const SizedBox(width: 8),
+                          _buildSpeedControl(),
+                          const SizedBox(width: 8),
+                          Obx(() {
+                            final position = _player.currentPosition.value;
+                            final total = _player.duration.value;
+                            return Text(
+                              '${_formatDuration(position)} / ${_formatDuration(total)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            );
+                          }),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.fullscreen_exit,
+                              color: Colors.white,
+                            ),
+                            iconSize: 28,
+                            onPressed: () {
+                              widget.onFullscreen?.call();
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildProgressBar(),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -241,237 +572,6 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   void _cancelHideSeekTextTimer() {
     _hideSeekTextTimer?.cancel();
     _hideSeekTextTimer = null;
-  }
-
-  Widget _buildVideoPlayer() {
-    final controller = _getController();
-    if (controller != null && controller.value.isInitialized) {
-      // ValueKey(controller.hashCode) 确保当 controller 是新对象时，
-      // VideoPlayer Widget 能正确重建，避免引用已销毁的 native player ID
-      return SizedBox.expand(
-        child: Center(
-          child: AspectRatio(
-            aspectRatio: controller.value.aspectRatio > 0
-                ? controller.value.aspectRatio
-                : 16 / 9,
-            child: VideoPlayer(controller, key: ValueKey(controller.hashCode)),
-          ),
-        ),
-      );
-    }
-    // 未初始化或无 controller，显示黑色背景和加载状态
-    return Container(
-      color: Colors.black,
-      child: const Center(
-        child: Icon(Icons.play_circle_outline, size: 64, color: Colors.white30),
-      ),
-    );
-  }
-
-  Widget _buildLoadingIndicator() {
-    return Obx(() {
-      if (_player.isBuffering.value ||
-          _player.playbackState.value == PlaybackState.loading) {
-        return Container(
-          color: Colors.black26,
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    });
-  }
-
-  Widget _buildControlsOverlay() {
-    return AnimatedOpacity(
-      opacity: _controlsVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 300),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 顶部控制栏（返回/退出全屏按钮）
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.7),
-                    Colors.black.withValues(alpha: 0.3),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Row(
-                    children: [
-                      // 返回按钮（全屏时退出全屏，非全屏时返回上一页）
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        iconSize: 28,
-                        onPressed: () {
-                          if (widget.isFullscreen?.call() ?? false) {
-                            widget.onFullscreen?.call();
-                          } else {
-                            Navigator.of(context).maybePop();
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // 中央播放控制（快退、播放/暂停、快进）
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 快退 10 秒
-                  IconButton(
-                    icon: const Icon(Icons.replay_10, color: Colors.white),
-                    iconSize: 48,
-                    onPressed: () {
-                      final newPosition =
-                          _player.currentPosition.value -
-                          const Duration(seconds: 10);
-                      _player.seekTo(
-                        newPosition < Duration.zero
-                            ? Duration.zero
-                            : newPosition,
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 32),
-                  // 播放/暂停（中央大按钮）
-                  Obx(
-                    () => IconButton(
-                      icon: Icon(
-                        _player.playbackState.value == PlaybackState.playing
-                            ? Icons.pause_circle_filled
-                            : Icons.play_circle_filled,
-                        color: Colors.white,
-                      ),
-                      iconSize: 72,
-                      onPressed: () {
-                        if (_player.playbackState.value ==
-                            PlaybackState.playing) {
-                          _player.pause();
-                        } else {
-                          _player.resume();
-                        }
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 32),
-                  // 快进 10 秒
-                  IconButton(
-                    icon: const Icon(Icons.forward_10, color: Colors.white),
-                    iconSize: 48,
-                    onPressed: () {
-                      final newPosition =
-                          _player.currentPosition.value +
-                          const Duration(seconds: 10);
-                      _player.seekTo(
-                        newPosition > _player.duration.value
-                            ? _player.duration.value
-                            : newPosition,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // 底部控制区域（进度条、音量、倍速、全屏）
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.7),
-                    Colors.black.withValues(alpha: 0.4),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 底部按钮栏
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: Row(
-                        children: [
-                          // 音量控制
-                          _buildVolumeControl(),
-                          const SizedBox(width: 8),
-                          // 倍速控制
-                          _buildSpeedControl(),
-                          const SizedBox(width: 8),
-                          // 时间显示
-                          Obx(() {
-                            final position = _player.currentPosition.value;
-                            final total = _player.duration.value;
-                            return Text(
-                              '${_formatDuration(position)} / ${_formatDuration(total)}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            );
-                          }),
-                          const Spacer(),
-                          // 全屏按钮
-                          IconButton(
-                            icon: Icon(
-                              widget.isFullscreen?.call() ?? false
-                                  ? Icons.fullscreen_exit
-                                  : Icons.fullscreen,
-                              color: Colors.white,
-                            ),
-                            iconSize: 28,
-                            onPressed: () {
-                              widget.onFullscreen?.call();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    // 进度条（最底部）
-                    _buildProgressBar(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildProgressBar() {
@@ -514,7 +614,6 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
           color: Colors.white,
         ),
         onPressed: () {
-          // 简单的音量切换
           _player.setVolume(_player.volume > 0 ? 0 : 1);
         },
       ),
@@ -543,9 +642,54 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
+
+  // ───────────────────────────────────────────────────
+  // 滑动快进手势处理
+  // ───────────────────────────────────────────────────
+  void _onHorizontalDragStart(DragStartDetails details) {
+    if (!widget.showControls) return;
+    _isHorizontalDragging = true;
+    _horizontalDragDelta = 0;
+    _dragStartPosition = _player.currentPosition.value;
+    _cancelHideSeekTextTimer();
+    setState(() {});
+  }
+
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (!widget.showControls || !_isHorizontalDragging) return;
+    _horizontalDragDelta += details.delta.dx;
+    final screenWidth = context.size?.width ?? 1.0;
+    final secondsDelta = (_horizontalDragDelta / screenWidth) * 60;
+    final newPosition =
+        _dragStartPosition! + Duration(seconds: secondsDelta.toInt());
+    final total = _player.duration.value;
+    final clampedPosition = Duration(
+      milliseconds: newPosition.inMilliseconds.clamp(0, total.inMilliseconds),
+    );
+    final diff = clampedPosition - _dragStartPosition!;
+    final sign = diff.isNegative ? '-' : '+';
+    _dragSeekText =
+        '$sign${_formatDuration(diff.abs())} / ${_formatDuration(clampedPosition)}';
+    setState(() {});
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (!widget.showControls || !_isHorizontalDragging) return;
+    _isHorizontalDragging = false;
+    final screenWidth = context.size?.width ?? 1.0;
+    final secondsDelta = (_horizontalDragDelta / screenWidth) * 60;
+    final newPosition =
+        _dragStartPosition! + Duration(seconds: secondsDelta.toInt());
+    final total = _player.duration.value;
+    final clampedPosition = Duration(
+      milliseconds: newPosition.inMilliseconds.clamp(0, total.inMilliseconds),
+    );
+    _player.seekTo(clampedPosition);
+    _startHideSeekTextTimer();
+    setState(() {});
+  }
 }
 
-/// 自定义进度条组件，确保缓冲条与进度条形状完全一致
 class _CustomSeekBar extends StatefulWidget {
   final double progress;
   final double buffered;
@@ -564,7 +708,6 @@ class _CustomSeekBar extends StatefulWidget {
 class _CustomSeekBarState extends State<_CustomSeekBar> {
   static const double _trackHeight = 3.0;
   static const double _thumbRadius = 5.0;
-  static const double _overlayRadius = 10.0;
 
   double _localProgress = 0.0;
   bool _isDragging = false;
@@ -587,9 +730,7 @@ class _CustomSeekBarState extends State<_CustomSeekBar> {
     const trackLeft = _thumbRadius;
     final trackRight = width - _thumbRadius;
     final trackWidth = trackRight - trackLeft;
-
     if (trackWidth <= 0) return;
-
     double ratio = (localPosition.dx - trackLeft) / trackWidth;
     ratio = ratio.clamp(0.0, 1.0);
     _localProgress = ratio;
@@ -599,19 +740,16 @@ class _CustomSeekBarState extends State<_CustomSeekBar> {
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-
     return GestureDetector(
       onHorizontalDragStart: (details) {
         _isDragging = true;
         final RenderBox box = context.findRenderObject() as RenderBox;
-        final width = box.size.width;
-        _updateDragPosition(details.localPosition, width);
+        _updateDragPosition(details.localPosition, box.size.width);
         setState(() {});
       },
       onHorizontalDragUpdate: (details) {
         final RenderBox box = context.findRenderObject() as RenderBox;
-        final width = box.size.width;
-        _updateDragPosition(details.localPosition, width);
+        _updateDragPosition(details.localPosition, box.size.width);
         setState(() {});
       },
       onHorizontalDragEnd: (details) {
@@ -620,8 +758,7 @@ class _CustomSeekBarState extends State<_CustomSeekBar> {
       },
       onTapDown: (details) {
         final RenderBox box = context.findRenderObject() as RenderBox;
-        final width = box.size.width;
-        _updateDragPosition(details.localPosition, width);
+        _updateDragPosition(details.localPosition, box.size.width);
         setState(() {});
       },
       onTapUp: (details) {
@@ -629,7 +766,7 @@ class _CustomSeekBarState extends State<_CustomSeekBar> {
         setState(() {});
       },
       child: SizedBox(
-        height: _overlayRadius * 2,
+        height: _thumbRadius * 2 + 4,
         width: double.infinity,
         child: CustomPaint(
           painter: _SeekBarPainter(
@@ -667,7 +804,6 @@ class _SeekBarPainter extends CustomPainter {
     final trackRight = size.width - thumbRadius;
     final trackWidth = trackRight - trackLeft;
 
-    // 1. 背景轨道（未播放 + 未缓冲部分）
     final bgPaint = Paint()
       ..color = const Color(0x4DFFFFFF)
       ..strokeCap = StrokeCap.round
@@ -678,7 +814,6 @@ class _SeekBarPainter extends CustomPainter {
       bgPaint,
     );
 
-    // 2. 缓冲条（与轨道完全一致的形状：相同高度、相同圆角）
     if (buffered > 0) {
       final bufferedRight = trackLeft + trackWidth * buffered;
       final bufferedPaint = Paint()
@@ -692,7 +827,6 @@ class _SeekBarPainter extends CustomPainter {
       );
     }
 
-    // 3. 已播放部分（覆盖在缓冲条之上）
     if (progress > 0) {
       final progressRight = trackLeft + trackWidth * progress;
       final progressPaint = Paint()
@@ -706,7 +840,6 @@ class _SeekBarPainter extends CustomPainter {
       );
     }
 
-    // 4. 圆形滑块
     final thumbX = trackLeft + trackWidth * progress;
     final thumbPaint = Paint()
       ..color = primaryColor

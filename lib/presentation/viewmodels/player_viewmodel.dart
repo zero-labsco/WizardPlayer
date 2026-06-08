@@ -251,10 +251,16 @@ class PlayerViewModel extends GetxController {
         // 如果上次观看的是同一集，则恢复播放位置
         if (history.episodeNumber == _currentEpisode.value?.episodeNumber) {
           final position = Duration(milliseconds: history.position);
+          final duration = _player.duration.value;
+          // 如果距离视频末尾不足 5 秒，视为已看完，从头开始
+          if (duration - position < const Duration(seconds: 5)) {
+            AppLogger().d(
+              'Position near end (${position.inSeconds}s / ${duration.inSeconds}s), starting from beginning',
+            );
+            return;
+          }
           // 确保不超过视频时长
-          final safePosition = position <= _player.duration.value
-              ? position
-              : Duration.zero;
+          final safePosition = position <= duration ? position : Duration.zero;
           await _player.seekTo(safePosition);
           AppLogger().d(
             'Resumed playback position: ${safePosition.inSeconds}s',

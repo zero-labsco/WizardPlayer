@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizard_player_media/wizard_player_media.dart';
@@ -9,6 +8,11 @@ import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 
 /// 播放器页面
+///
+/// 1. 非全屏模式：本地布局 + WizardPlayerWidget
+/// 2. 全屏模式：push 独立的 FullscreenPlayerRoute，传入同一个 player
+/// 3. Player（controller）实例在整个生命周期中保持不变
+/// 4. VideoPlayer Widget 在不同 Route 中是不同实例，但绑定同一个 controller
 class PlayerScreen extends StatefulWidget {
   final VideoInfo video;
   final int? startEpisode;
@@ -21,32 +25,21 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   late final PlayerViewModel _viewModel;
-  bool _isFullScreen = false;
-  // GlobalKey 用于保持 WizardPlayerWidget 的 State 不被重建
-  final GlobalKey _playerKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-
     _viewModel = PlayerViewModel(
       Get.find<PlayHistoryRepository>(),
       Get.find<VideoRepository>(),
       Get.find<WizardPlayerTorrent>(),
     );
-
-    // 初始化播放器
     _viewModel.initPlayer(widget.video, widget.startEpisode);
   }
 
   @override
   void dispose() {
     _viewModel.onClose();
-
-    // 恢复屏幕设置
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
     super.dispose();
   }
 
@@ -54,68 +47,72 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
+    final statusBarHeight = mediaQuery.padding.top;
 
-    // 非全屏模式下：播放器从状态栏下方开始，严格 16:9 比例
-    final topPadding = _isFullScreen ? 0.0 : mediaQuery.padding.top;
-    // 16:9 比例计算高度
-    final basePlayerHeight = screenWidth * 9 / 16;
-    // 最大不超过可用高度的 50%（非全屏模式）
-    final maxPlayerHeight =
-        (screenHeight - topPadding - mediaQuery.padding.bottom) * 0.5;
-    final finalPlayerHeight = basePlayerHeight < maxPlayerHeight
-        ? basePlayerHeight
-        : maxPlayerHeight;
+    // 视频区域内部宽度（减去左右留白 16*2）
+    final videoInnerWidth = screenWidth - 32;
+    // 视频高度：16:9
+    final videoHeight = videoInnerWidth * 9 / 16;
+    // 控件区域高度：进度条行(28) + 按钮行(48)
+    const controlsHeight = 76.0;
+    // 播放器总高度 = 视频高度 + 控件区域
+    final playerHeight = videoHeight + controlsHeight;
 
-    // 全屏模式：播放器占满整个屏幕
-    final playerHeight = _isFullScreen ? screenHeight : finalPlayerHeight;
-    final playerTop = _isFullScreen ? 0.0 : topPadding;
-
+    // ═════════════════════════════════════════════════════════════
+    // 布局：
+    // 顶部：视频区域(16:9，有留白) + 进度条行 + 按钮行（从状态栏下方开始）
+    // 下方：集数选择器
+    // ═════════════════════════════════════════════════════════════
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Obx(() {
-        if (_viewModel.isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
-        }
-        // 核心：播放器用 GlobalKey 保持 State 不被重建
-        // height 只影响 layout，不影响播放器控制器本身
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            // 播放器：高度随全屏状态变化，GlobalKey 保证 WizardPlayerWidget 的 State 保持不变
-            // （同一个 key + 同一个位置 = State 复用，VideoPlayerController 不被销毁）
-            Positioned(
-              top: playerTop,
-              left: 0,
-              right: 0,
-              child: SizedBox(
-                height: playerHeight,
-                child: WizardPlayerWidget(
-                  key: _playerKey,
-                  player: _viewModel.player,
-                  onFullscreen: _toggleFullScreen,
-                  isFullscreen: () => _isFullScreen,
-                ),
-              ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ──────────────────────────────────────────────────────
+          // 1. 播放器：视频(16:9) + 进度条 + 按钮行，从状态栏下方开始
+          // ──────────────────────────────────────────────────────
+          Positioned(
+            top: statusBarHeight,
+            left: 0,
+            right: 0,
+            height: playerHeight,
+            child: WizardPlayerWidget(
+              player: _viewModel.player,
+              onFullscreen: _toggleFullScreen,
+              isFullscreen: () => false,
             ),
-            // 非全屏模式：集数选择器（从播放器下方开始，背景为黑色遮挡）
-            if (!_isFullScreen)
-              Positioned(
-                top: topPadding + finalPlayerHeight,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _buildEpisodeSelector(),
-              ),
-          ],
-        );
-      }),
+          ),
+
+          // ──────────────────────────────────────────────────────
+          // 2. 集数选择器：从播放器下方开始，到屏幕底部
+          // ──────────────────────────────────────────────────────
+          Positioned(
+            top: statusBarHeight + playerHeight,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildEpisodeSelector(),
+          ),
+
+          // ──────────────────────────────────────────────────────
+          // 3. Loading overlay：仅在视频源加载时显示
+          // ──────────────────────────────────────────────────────
+          Obx(() {
+            if (_viewModel.isLoading) {
+              return Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
+      ),
     );
   }
 
-  /// 集数选择器
   Widget _buildEpisodeSelector() {
     return GetBuilder<PlayerViewModel>(
       id: 'player',
@@ -183,22 +180,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  /// 切换全屏
+  ///
+  /// push 一个独立的全屏 Route，传入同一个 player 实例
+  /// Route 内部会：
+  /// - 创建全新的 WizardPlayerWidget（绑定同一个 controller）
+  /// - 设置横屏 + 沉浸式 UI
+  /// pop Route 后，回到这里，原有的 WizardPlayerWidget 继续渲染
   void _toggleFullScreen() {
-    setState(() {
-      _isFullScreen = !_isFullScreen;
-    });
-
-    if (_isFullScreen) {
-      // 进入全屏：切换到横屏，隐藏系统 UI
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    } else {
-      // 退出全屏：恢复竖屏方向和系统 UI
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    }
+    showFullScreenPlayer(context, _viewModel.player);
   }
 }

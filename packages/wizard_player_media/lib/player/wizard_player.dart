@@ -3,11 +3,17 @@ import 'package:get/get.dart';
 import 'playback_state.dart';
 
 /// 播放器抽象接口
+///
+/// 设计说明：
+/// - 位置更新 Timer 不依赖 GetxController 的 onInit 生命周期
+///   因为 player 可能被直接 new 出来（不走 Get.put）
+/// - 子类应在构造函数或初始化时调用 startPositionUpdates()
+/// - 在 release()/dispose() 时调用 stopPositionUpdates()
 abstract class WizardPlayer extends GetxController {
   /// 当前播放状态
   final Rx<PlaybackState> playbackState = PlaybackState.idle.obs;
 
-  /// 当前播放位置（毫秒）
+  /// 当前播放位置
   final Rx<Duration> currentPosition = Duration.zero.obs;
 
   /// 总时长
@@ -23,18 +29,6 @@ abstract class WizardPlayer extends GetxController {
   final RxString currentUri = ''.obs;
 
   Timer? _positionTimer;
-
-  @override
-  void onInit() {
-    super.onInit();
-    _startPositionTimer();
-  }
-
-  @override
-  void onClose() {
-    _stopPositionTimer();
-    super.onClose();
-  }
 
   /// 播放 URI
   Future<void> playUri(String uri);
@@ -75,15 +69,18 @@ abstract class WizardPlayer extends GetxController {
   /// 获取底层播放器实例（平台特定）
   T? getPlatformPlayer<T>();
 
-  /// 启动位置更新定时器
-  void _startPositionTimer() {
+  /// 启动位置更新定时器（每 200ms）
+  ///
+  /// 公开方法：外部可以手动调用，不依赖 GetxController 的生命周期
+  void startPositionUpdates() {
+    if (_positionTimer != null && _positionTimer!.isActive) return;
     _positionTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       updatePosition();
     });
   }
 
   /// 停止位置更新定时器
-  void _stopPositionTimer() {
+  void stopPositionUpdates() {
     _positionTimer?.cancel();
     _positionTimer = null;
   }
