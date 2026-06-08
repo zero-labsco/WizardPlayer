@@ -11,6 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
   libtorrent_flutter: ^1.8.5
+  
+    # 自定义工具库，包含日志、存储等功能
+  amis_flutter_utils:
+    git:
+      url: https://gitee.com/AmisKwok/amis_flutter_utils.git
+      ref: main
+
 
 dev_dependencies:
   flutter_test:

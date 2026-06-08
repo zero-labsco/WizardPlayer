@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 
+import 'package:amis_flutter_utils/utils.dart';
 import 'package:libtorrent_flutter/libtorrent_flutter.dart' as lt;
 import 'models/torrent_info.dart';
 import 'models/download_status.dart';
@@ -225,14 +226,14 @@ class WizardPlayerTorrent {
 
       // 每 10 秒打印一次状态
       if (logCount % 50 == 0) {
-        print(
+        AppLogger().d(
           'Waiting for metadata... torrent=$torrent, hasMetadata=${torrent?.hasMetadata}, peers=${torrent?.numPeers}',
         );
       }
       logCount++;
 
       if (torrent != null && torrent.hasMetadata) {
-        print('✅ Got metadata!');
+        AppLogger().d('✅ Got metadata!');
         return;
       }
       await Future.delayed(const Duration(milliseconds: 200));
