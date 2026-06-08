@@ -69,7 +69,7 @@ class PlayerViewModel extends GetxController {
     this._videoRepository,
     this._wizardPlayerTorrent,
   ) {
-    _player = Get.put(VideoPlayerWizard());
+    _player = VideoPlayerWizard();
   }
 
   @override

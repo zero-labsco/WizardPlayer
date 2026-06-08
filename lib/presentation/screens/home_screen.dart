@@ -262,10 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 构建内容区域
   Widget _buildContent(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     switch (_selectedIndex) {
       case 0:
         return _buildHomeContent(context);
@@ -283,6 +279,11 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 首页内容
   Widget _buildHomeContent(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(

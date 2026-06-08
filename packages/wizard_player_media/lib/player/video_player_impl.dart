@@ -8,6 +8,8 @@ import 'playback_state.dart';
 /// 基于 video_player 的实现
 class VideoPlayerWizard extends WizardPlayer {
   VideoPlayerController? _controller;
+  bool _disposed = false;
+  bool _controllerActive = false;
 
   @override
   Future<void> playUri(String uri) async {
@@ -15,8 +17,18 @@ class VideoPlayerWizard extends WizardPlayer {
       updatePlaybackState(PlaybackState.loading);
       currentUri.value = uri;
 
+      // 先将 controller 标记为无效，让 Widget 树显示黑色背景
+      _controllerActive = false;
+
       // 释放旧的控制器
-      await _controller?.dispose();
+      if (_controller != null) {
+        _controller!.removeListener(_onPlayerStateChanged);
+        await _controller!.dispose();
+        _controller = null;
+      }
+
+      // 如果已销毁，直接返回
+      if (_disposed) return;
 
       // 创建新的控制器
       if (uri.startsWith('http')) {
@@ -27,8 +39,22 @@ class VideoPlayerWizard extends WizardPlayer {
         );
       }
 
+      // 如果已销毁，直接返回
+      if (_disposed) {
+        await _controller?.dispose();
+        _controller = null;
+        return;
+      }
+
       // 初始化控制器
       await _controller!.initialize();
+
+      // 如果已销毁，直接返回
+      if (_disposed) {
+        await _controller?.dispose();
+        _controller = null;
+        return;
+      }
 
       // 添加监听器
       _controller!.addListener(_onPlayerStateChanged);
@@ -39,6 +65,9 @@ class VideoPlayerWizard extends WizardPlayer {
 
       // 更新总时长
       duration.value = _controller!.value.duration;
+
+      // 标记为有效
+      _controllerActive = true;
 
       // 开始播放
       await _controller!.play();
@@ -115,6 +144,8 @@ class VideoPlayerWizard extends WizardPlayer {
 
   @override
   Future<void> release() async {
+    // 先将 controller 标记为无效，避免 Widget 树在 dispose 过程中访问
+    _controllerActive = false;
     if (_controller != null) {
       _controller!.removeListener(_onPlayerStateChanged);
       await _controller!.dispose();
@@ -123,9 +154,13 @@ class VideoPlayerWizard extends WizardPlayer {
     updatePlaybackState(PlaybackState.idle);
   }
 
+  /// 获取底层播放器控制器（仅在 controller 有效时返回）
   @override
   T? getPlatformPlayer<T>() {
-    if (_controller != null && _controller is T) {
+    if (_controllerActive &&
+        !_disposed &&
+        _controller != null &&
+        _controller is T) {
       return _controller as T;
     }
     return null;
@@ -164,6 +199,7 @@ class VideoPlayerWizard extends WizardPlayer {
 
   @override
   void onClose() {
+    _disposed = true;
     release();
     super.onClose();
   }
