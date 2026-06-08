@@ -1,0 +1,90 @@
+name: wizardplayer
+description: "跨平台视频播放器，支持动漫、韩剧、美剧、日剧播放"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Flutter国际化支持
+  flutter_localizations:
+    sdk: flutter
+
+  # 日期格式化和国际化
+  intl: ^0.20.2
+
+  # iOS风格图标
+  cupertino_icons: ^1.0.6
+
+  # 自定义工具库，包含日志、存储等功能
+  amis_flutter_utils:
+    git:
+      url: https://gitee.com/AmisKwok/amis_flutter_utils.git
+      ref: main
+
+  # GetX状态管理和路由
+  get: ^4.7.3
+
+  # Dio HTTP请求库
+  dio: ^5.7.0
+
+  # Freezed用于不可变数据模型
+  freezed_annotation: ^2.4.1
+
+  # JSON序列化注解
+  json_annotation: ^4.9.0
+
+  # 本地模块化播放器库
+  wizard_player_media:
+    path: packages/wizard_player_media
+
+  # 本地数据源模块
+  wizard_player_datasource:
+    path: packages/wizard_player_datasource
+
+  # 本地弹幕模块
+  wizard_player_danmaku:
+    path: packages/wizard_player_danmaku
+
+  # 本地BT播放模块
+  wizard_player_torrent:
+    path: packages/wizard_player_torrent
+
+  # 设备信息获取
+  device_info_plus: ^10.1.2
+
+  # URL跳转
+  url_launcher: ^6.3.1
+
+  # 路径提供者（用于获取临时目录）
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # 代码规范检查
+  flutter_lints: ^3.0.0
+
+  # 代码生成工具
+  build_runner: ^2.4.8
+
+  # Freezed代码生成
+  freezed: ^2.4.7
+
+  # JSON序列化代码生成
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+
+  # 国际化配置
+  generate: true
+
+  # 国际化资源
+  assets:
+    - lib/core/l10n/

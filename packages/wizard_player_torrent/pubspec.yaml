@@ -1,0 +1,26 @@
+name: wizard_player_torrent
+description: "Wizard Player Torrent Plugin - Full platform BT playback support using libtorrent_flutter"
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ^3.11.5
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  libtorrent_flutter: ^1.8.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  # This package is a pure Dart package that uses libtorrent_flutter
+  # No native platform implementation needed

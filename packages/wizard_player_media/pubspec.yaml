@@ -1,0 +1,25 @@
+name: wizard_player_media
+description: "跨平台视频播放器抽象库，为 WizardPlayer 提供统一的播放器接口"
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # GetX 状态管理
+  get: ^4.7.3
+
+  # 视频播放核心
+  video_player: ^2.8.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

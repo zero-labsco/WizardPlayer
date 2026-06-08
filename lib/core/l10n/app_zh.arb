@@ -1,0 +1,192 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Wizard Player",
+  "home": "首页",
+  "discover": "发现",
+  "history": "历史",
+  "favorite": "收藏",
+  "favorites": "收藏",
+  "play": "播放",
+  "pause": "暂停",
+  "fullScreen": "全屏",
+  "exitFullScreen": "退出全屏",
+  "previous": "上一集",
+  "next": "下一集",
+  "clearHistory": "清除历史记录",
+  "settings": "设置",
+  "theme": "主题",
+  "light": "浅色",
+  "dark": "深色",
+  "darkMode": "深色模式",
+  "followSystem": "跟随系统",
+  "language": "语言",
+  "english": "English",
+  "chinese": "中文",
+  "search": "搜索",
+  "searchPlaceholder": "搜索番剧...",
+  "videoDetail": "视频详情",
+  "episodes": "集数",
+  "selectEpisode": "选集",
+  "sources": "源",
+  "episodeNumber": "第{number}集",
+  "@episodeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "loading": "加载中...",
+  "error": "错误",
+  "loadError": "加载失败",
+  "confirm": "确认",
+  "cancel": "取消",
+  "delete": "删除",
+  "save": "保存",
+  "anime": "动漫",
+  "koreanDrama": "韩剧",
+  "americanDrama": "美剧",
+  "japaneseDrama": "日剧",
+  "recommended": "推荐",
+  "popular": "热门",
+  "latest": "最新",
+  "latestUpdate": "最新更新",
+  "continueWatching": "继续观看",
+  "todayUpdate": "今日更新",
+  "weeklyRanking": "本周排行",
+  "noResults": "未找到相关结果",
+  "enterKeywordToSearch": "输入关键词搜索番剧",
+  "foundResults": "找到 {count} 个结果",
+  "@foundResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playbackPosition": "播放位置: {position}",
+  "@playbackPosition": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "startPlay": "开始播放",
+  "continuePlay": "继续观看 第 {number} 集",
+  "@continuePlay": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "introduction": "简介",
+  "tags": "标签",
+  "relatedRecommend": "相关推荐",
+  "noUpdateToday": "今日没有更新",
+  "category": "分类",
+  "movie": "电影",
+  "tvSeries": "电视剧",
+  "noPlayHistory": "还没有在看的番剧，去看看有什么好番吧...",
+  "noFavorites": "暂无收藏",
+  "clearHistoryConfirm": "确定要清除所有历史记录吗？",
+  "clearAllHistory": "清除所有历史",
+  "searchAnime": "搜索番剧",
+  "getVideoList": "获取{type}视频列表，第{page}页",
+  "@getVideoList": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "getVideoDetail": "获取视频详情，ID: {videoId}",
+  "@getVideoDetail": {
+    "placeholders": {
+      "videoId": {
+        "type": "String"
+      }
+    }
+  },
+  "searchVideo": "搜索视频，关键词: {keyword}",
+  "@searchVideo": {
+    "placeholders": {
+      "keyword": {
+        "type": "String"
+      }
+    }
+  },
+  "getPlayHistoryFailed": "获取播放历史失败",
+  "getVideoHistoryFailed": "获取视频历史记录失败",
+  "savePlayHistorySuccess": "保存播放历史成功，视频ID: {videoId}",
+  "@savePlayHistorySuccess": {
+    "placeholders": {
+      "videoId": {
+        "type": "String"
+      }
+    }
+  },
+  "savePlayHistoryFailed": "保存播放历史失败",
+  "deletePlayHistorySuccess": "删除播放历史成功，历史ID: {historyId}",
+  "@deletePlayHistorySuccess": {
+    "placeholders": {
+      "historyId": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePlayHistoryFailed": "删除播放历史失败",
+  "clearAllPlayHistorySuccess": "清除所有播放历史成功",
+  "clearAllPlayHistoryFailed": "清除播放历史失败",
+  "initPlayerFailed": "初始化播放器失败",
+  "noAvailableSources": "没有可用的播放源",
+  "initVideoPlayerFailed": "初始化视频播放器失败",
+  "autoPlayNextEpisode": "自动播放下一集: {episodeNumber}",
+  "@autoPlayNextEpisode": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "resumePlayPosition": "恢复播放位置: {position}秒",
+  "@resumePlayPosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "loadPlayPositionFailed": "加载播放位置失败",
+  "savePlayPositionFailed": "保存播放位置失败",
+  "episodeNotFound": "未找到第{episodeNumber}集",
+  "@episodeNotFound": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "switchEpisodeFailed": "切换集数失败",
+  "sourceNotFoundOrUnavailable": "未找到可用的源: {sourceId}",
+  "@sourceNotFoundOrUnavailable": {
+    "placeholders": {
+      "sourceId": {
+        "type": "String"
+      }
+    }
+  },
+  "switchSourceFailed": "切换播放源失败",
+  "about": "关于",
+  "sunday": "周日",
+  "monday": "周一",
+  "tuesday": "周二",
+  "wednesday": "周三",
+  "thursday": "周四",
+  "friday": "周五",
+  "saturday": "周六"
+}

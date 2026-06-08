@@ -1,0 +1,41 @@
+name: wizard_player_datasource
+description: "数据源模块，为 WizardPlayer 提供视频数据获取能力"
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 自定义工具库，包含日志、存储等功能
+  amis_flutter_utils:
+    git:
+      url: https://gitee.com/AmisKwok/amis_flutter_utils.git
+      ref: main
+
+  # GetX 状态管理
+  get: ^4.7.3
+
+  # 网络请求
+  dio: ^5.7.0
+
+  # HTML 解析
+  html: ^0.15.4
+
+  # JSON 序列化
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.8
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true

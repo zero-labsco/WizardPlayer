@@ -1,0 +1,192 @@
+{
+  "@@locale": "en",
+  "appTitle": "Wizard Player",
+  "home": "Home",
+  "discover": "Discover",
+  "history": "History",
+  "favorite": "Favorite",
+  "favorites": "Favorites",
+  "play": "Play",
+  "pause": "Pause",
+  "fullScreen": "Full Screen",
+  "exitFullScreen": "Exit Full Screen",
+  "previous": "Previous",
+  "next": "Next",
+  "clearHistory": "Clear History",
+  "settings": "Settings",
+  "theme": "Theme",
+  "light": "Light",
+  "dark": "Dark",
+  "darkMode": "Dark Mode",
+  "followSystem": "Follow System",
+  "language": "Language",
+  "english": "English",
+  "chinese": "中文",
+  "search": "Search",
+  "searchPlaceholder": "Search anime...",
+  "videoDetail": "Video Detail",
+  "episodes": "Episodes",
+  "selectEpisode": "Select Episode",
+  "sources": "Sources",
+  "episodeNumber": "Episode {number}",
+  "@episodeNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "loading": "Loading...",
+  "error": "Error",
+  "loadError": "Load failed",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "save": "Save",
+  "anime": "Anime",
+  "koreanDrama": "Korean Drama",
+  "americanDrama": "American Drama",
+  "japaneseDrama": "Japanese Drama",
+  "recommended": "Recommended",
+  "popular": "Popular",
+  "latest": "Latest",
+  "latestUpdate": "Latest Update",
+  "continueWatching": "Continue Watching",
+  "todayUpdate": "Today's Update",
+  "weeklyRanking": "Weekly Ranking",
+  "noResults": "No results found",
+  "enterKeywordToSearch": "Enter keyword to search anime",
+  "foundResults": "Found {count} results",
+  "@foundResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "playbackPosition": "Playback position: {position}",
+  "@playbackPosition": {
+    "placeholders": {
+      "position": {
+        "type": "String"
+      }
+    }
+  },
+  "startPlay": "Start Play",
+  "continuePlay": "Continue Episode {number}",
+  "@continuePlay": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "introduction": "Introduction",
+  "tags": "Tags",
+  "relatedRecommend": "Related Recommendations",
+  "noUpdateToday": "No update today",
+  "category": "Category",
+  "movie": "Movie",
+  "tvSeries": "TV Series",
+  "noPlayHistory": "You haven't watched any anime yet, go check out what's good...",
+  "noFavorites": "No favorites yet",
+  "clearHistoryConfirm": "Are you sure you want to clear all history?",
+  "clearAllHistory": "Clear All History",
+  "searchAnime": "Search Anime",
+  "getVideoList": "Getting {type} video list, page {page}",
+  "@getVideoList": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "getVideoDetail": "Getting video detail, ID: {videoId}",
+  "@getVideoDetail": {
+    "placeholders": {
+      "videoId": {
+        "type": "String"
+      }
+    }
+  },
+  "searchVideo": "Searching video, keyword: {keyword}",
+  "@searchVideo": {
+    "placeholders": {
+      "keyword": {
+        "type": "String"
+      }
+    }
+  },
+  "getPlayHistoryFailed": "Failed to get play history",
+  "getVideoHistoryFailed": "Failed to get video history",
+  "savePlayHistorySuccess": "Play history saved successfully, video ID: {videoId}",
+  "@savePlayHistorySuccess": {
+    "placeholders": {
+      "videoId": {
+        "type": "String"
+      }
+    }
+  },
+  "savePlayHistoryFailed": "Failed to save play history",
+  "deletePlayHistorySuccess": "Play history deleted successfully, history ID: {historyId}",
+  "@deletePlayHistorySuccess": {
+    "placeholders": {
+      "historyId": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePlayHistoryFailed": "Failed to delete play history",
+  "clearAllPlayHistorySuccess": "All play history cleared successfully",
+  "clearAllPlayHistoryFailed": "Failed to clear play history",
+  "initPlayerFailed": "Failed to initialize player",
+  "noAvailableSources": "No available sources",
+  "initVideoPlayerFailed": "Failed to initialize video player",
+  "autoPlayNextEpisode": "Auto playing next episode: {episodeNumber}",
+  "@autoPlayNextEpisode": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "resumePlayPosition": "Resumed playback position: {position} seconds",
+  "@resumePlayPosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "loadPlayPositionFailed": "Failed to load playback position",
+  "savePlayPositionFailed": "Failed to save playback position",
+  "episodeNotFound": "Episode {episodeNumber} not found",
+  "@episodeNotFound": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "switchEpisodeFailed": "Failed to switch episode",
+  "sourceNotFoundOrUnavailable": "Source not found or unavailable: {sourceId}",
+  "@sourceNotFoundOrUnavailable": {
+    "placeholders": {
+      "sourceId": {
+        "type": "String"
+      }
+    }
+  },
+  "switchSourceFailed": "Failed to switch source",
+  "about": "About",
+  "sunday": "Sunday",
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday"
+}
