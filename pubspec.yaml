@@ -79,6 +79,11 @@ dev_dependencies:
   # JSON序列化代码生成
   json_serializable: ^6.7.1
 
+# Windows 构建：覆盖 libtorrent_flutter 使用本地预编译版本，避免 CMake 下载失败
+dependency_overrides:
+  libtorrent_flutter:
+    path: packages/_libtorrent_flutter_local
+
 flutter:
   uses-material-design: true
 
