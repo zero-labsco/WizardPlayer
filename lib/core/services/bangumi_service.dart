@@ -285,9 +285,9 @@ class BangumiService extends GetxService {
   /// 获取本地观看进度
   Future<int?> getLocalProgress(int subjectId) async {
     final key = 'progress_$subjectId';
-    final progress = SpUtil.get(key);
+    final progress = SpUtil.get<int>(key);
     if (progress != null) {
-      return progress as int;
+      return progress;
     }
     return null;
   }

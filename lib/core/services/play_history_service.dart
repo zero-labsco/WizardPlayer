@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 
@@ -116,9 +118,10 @@ class PlayHistoryManager extends GetxController {
   /// 加载历史记录
   Future<void> _loadHistories() async {
     try {
-      final data = SpUtil.get(_storageKey);
-      if (data != null) {
-        final list = (data as List<dynamic>)
+      final jsonString = SpUtil.get<String>(_storageKey);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final List<dynamic> data = json.decode(jsonString);
+        final list = data
             .map((e) => PlayHistory.fromJson(e as Map<String, dynamic>))
             .toList();
         histories.assignAll(list);
@@ -132,8 +135,8 @@ class PlayHistoryManager extends GetxController {
   /// 保存历史记录
   Future<void> _saveHistories() async {
     try {
-      final data = histories.map((e) => e.toJson()).toList();
-      await SpUtil.put(_storageKey, data);
+      final jsonString = json.encode(histories.map((e) => e.toJson()).toList());
+      await SpUtil.put(_storageKey, jsonString);
     } catch (e, stackTrace) {
       AppLogger().e('保存历史记录失败', error: e, stackTrace: stackTrace);
     }
