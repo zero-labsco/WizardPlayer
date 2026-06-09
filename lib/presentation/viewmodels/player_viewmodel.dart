@@ -69,7 +69,7 @@ class PlayerViewModel extends GetxController {
     this._videoRepository,
     this._wizardPlayerTorrent,
   ) {
-    _player = VideoPlayerWizard();
+    _player = MediaKitWizard();
   }
 
   @override
@@ -181,8 +181,8 @@ class PlayerViewModel extends GetxController {
   /// 初始化视频播放器
   Future<void> _initializeVideoPlayer(PlayableMedia media) async {
     try {
-      // 释放旧的播放器
-      await _player.release();
+      // 停止当前播放，但不释放播放器（保持实例可重用）
+      await _player.stop();
 
       String playUrl = media.url;
 
@@ -207,7 +207,9 @@ class PlayerViewModel extends GetxController {
       }
 
       // 使用 WizardPlayer 播放
+      AppLogger().d('Calling playUri with: $playUrl');
       await _player.playUri(playUrl);
+      AppLogger().d('playUri completed');
 
       update(['player']);
     } catch (e, stackTrace) {

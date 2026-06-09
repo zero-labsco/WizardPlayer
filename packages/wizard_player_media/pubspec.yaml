@@ -13,8 +13,10 @@ dependencies:
   # GetX 状态管理
   get: ^4.7.3
 
-  # 视频播放核心
-  video_player: ^2.8.6
+  # 视频播放核心：media_kit（Windows/Linux/macOS/Android/iOS/Web 全平台）
+  media_kit: ^1.2.6 # Primary package.
+  media_kit_video: ^2.0.1 # For video rendering.
+  media_kit_libs_video: ^1.0.7 # Native video dependencies.
 
 dev_dependencies:
   flutter_test:

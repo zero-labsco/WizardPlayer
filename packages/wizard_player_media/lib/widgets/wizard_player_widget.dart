@@ -2,16 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../player/wizard_player.dart';
-import '../player/video_player_impl.dart';
+import '../player/media_kit_impl.dart';
 import '../player/playback_state.dart';
 
-/// 视频播放器 Widget
+/// 视频播放器 Widget（基于 media_kit + libmpv 后端）
 ///
 /// 两套布局：
 /// 1. 全屏模式 (isFullscreen == true)
-///    保持 overlay 设计：控件覆盖在视频上
+///    overlay 布局：控件覆盖在视频上
 /// 2. 非全屏模式 (isFullscreen == false)
 ///    视频在外边框内，返回按钮在外边框左上角，进度条/时间/全屏按钮在外边框下方
 class WizardPlayerWidget extends StatefulWidget {
@@ -21,6 +22,7 @@ class WizardPlayerWidget extends StatefulWidget {
   final bool autoPlay;
   final VoidCallback? onFullscreen;
   final bool Function()? isFullscreen;
+  final bool showProgressBar;
 
   const WizardPlayerWidget({
     super.key,
@@ -30,6 +32,7 @@ class WizardPlayerWidget extends StatefulWidget {
     this.autoPlay = false,
     this.onFullscreen,
     this.isFullscreen,
+    this.showProgressBar = true,
   });
 
   @override
@@ -49,7 +52,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   @override
   void initState() {
     super.initState();
-    _player = widget.player ?? VideoPlayerWizard();
+    _player = widget.player ?? MediaKitWizard();
     _initPlayer();
   }
 
@@ -74,8 +77,9 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
     }
   }
 
-  VideoPlayerController? _getController() {
-    return _player.getPlatformPlayer<VideoPlayerController>();
+  /// 获取 media_kit 的底层 Player（供 Video 渲染用）
+  Player? _getPlatformPlayer() {
+    return _player.getPlatformPlayer<Player>();
   }
 
   void _toggleControls() {
@@ -121,28 +125,22 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
 
     // 用 Obx 监听播放状态：controller 从 null 变为就绪时会触发重建
     return Obx(() {
-      // 每次状态变化时重新获取 controller
-      final controller = _getController();
+      // 每次状态变化时重新获取底层 player
+      final platformPlayer = _getPlatformPlayer();
       _player.playbackState.value; // 监听，触发重建
 
       if (isFullscreenMode) {
-        // ══════════════════════════════════════════════════════════
-        // 全屏模式：overlay 布局（保持当前设计，不做任何改动）
-        // ══════════════════════════════════════════════════════════
-        return _buildFullscreenLayout(controller);
+        return _buildFullscreenLayout(platformPlayer);
       }
 
-      // ══════════════════════════════════════════════════════════
-      // 非全屏模式：视频在留白区域内，控件在下方
-      // ══════════════════════════════════════════════════════════
-      return _buildCompactLayout(controller);
+      return _buildCompactLayout(platformPlayer);
     });
   }
 
   // ───────────────────────────────────────────────────
   // 全屏模式：SizedBox.expand → Stack → overlay
   // ───────────────────────────────────────────────────
-  Widget _buildFullscreenLayout(VideoPlayerController? controller) {
+  Widget _buildFullscreenLayout(Player? platformPlayer) {
     return GestureDetector(
       onTap: widget.showControls ? _toggleControls : null,
       onDoubleTap: () {
@@ -160,9 +158,8 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            _buildVideoSurface(controller),
-            // 黑色占位（controller 未就绪时
-            if (controller == null || !controller.value.isInitialized)
+            _buildVideoSurface(platformPlayer),
+            if (platformPlayer == null)
               Container(
                 color: Colors.black,
                 child: const Center(
@@ -199,7 +196,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   // ───────────────────────────────────────────────────
   // 非全屏模式：视频(带留白) + 控件区两行（进度条在上，按钮在下）
   // ───────────────────────────────────────────────────
-  Widget _buildCompactLayout(VideoPlayerController? controller) {
+  Widget _buildCompactLayout(Player? platformPlayer) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -229,8 +226,8 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // 视频画面：按原始比例居中显示（不会拉伸填充）
-                    _buildVideoSurface(controller),
+                    // 视频画面：按原始比例居中显示
+                    _buildVideoSurface(platformPlayer),
                     // Loading
                     Obx(() {
                       if (_player.isBuffering.value ||
@@ -272,13 +269,14 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
           ),
         ),
         // ─── 控件行1：进度条（占满整行宽度） ───
-        SizedBox(
-          height: 28,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildProgressBar(),
+        if (widget.showProgressBar)
+          SizedBox(
+            height: 28,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildProgressBar(),
+            ),
           ),
-        ),
         // ─── 控件行2：播放/暂停、音量、倍速、时间、全屏按钮 ───
         if (_controlsVisible)
           SizedBox(
@@ -338,23 +336,14 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   }
 
   // ───────────────────────────────────────────────────
-  // 视频画面：只要 controller 存在就渲染 VideoPlayer
+  // 视频画面：用 media_kit 的 Video widget 渲染底层 Player
   // ───────────────────────────────────────────────────
-  Widget _buildVideoSurface(VideoPlayerController? controller) {
-    if (controller != null) {
-      return ValueListenableBuilder<VideoPlayerValue>(
-        valueListenable: controller,
-        builder: (context, value, child) {
-          final double ratio = value.isInitialized && value.aspectRatio > 0
-              ? value.aspectRatio
-              : 16 / 9;
-          return Center(
-            child: AspectRatio(
-              aspectRatio: ratio,
-              child: VideoPlayer(controller),
-            ),
-          );
-        },
+  Widget _buildVideoSurface(Player? platformPlayer) {
+    if (platformPlayer != null) {
+      // media_kit 的 Video 会根据视频原始比例自适应
+      return Video(
+        controller: VideoController(platformPlayer),
+        fill: Colors.black,
       );
     }
     return Container(color: Colors.black);
@@ -527,7 +516,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
                         ],
                       ),
                     ),
-                    _buildProgressBar(),
+                    if (widget.showProgressBar) _buildProgressBar(),
                   ],
                 ),
               ),

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:wizard_player_torrent/wizard_player_torrent.dart';
+import 'package:wizard_player_media/wizard_player_media.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
 import 'package:wizardplayer/core/managers/language_manager.dart';
 import 'package:wizardplayer/core/managers/theme_manager.dart';
@@ -18,6 +19,9 @@ import 'package:wizardplayer/presentation/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化媒体播放引擎（libmpv）——必须在任何视频播放前调用
+  ensureWizardPlayerMediaInitialized();
 
   // 移动端只允许竖屏
   await SystemChrome.setPreferredOrientations([
