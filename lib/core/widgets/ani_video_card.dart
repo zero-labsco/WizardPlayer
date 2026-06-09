@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wizardplayer/core/theme/app_colors.dart';
 
 /// 视频卡片组件
@@ -87,10 +88,11 @@ class VideoCard extends StatelessWidget {
                       top: Radius.circular(12),
                     ),
                     child: coverUrl != null
-                        ? Image.network(
-                            coverUrl!,
+                        ? CachedNetworkImage(
+                            imageUrl: coverUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                            placeholder: (_, __) => _buildPlaceholder(),
+                            errorWidget: (_, __, ___) => _buildPlaceholder(),
                           )
                         : _buildPlaceholder(),
                   ),

@@ -67,8 +67,8 @@ void main() async {
 
     Get.put(themeManager);
     Get.put(languageManager);
-    Get.put(PlayHistoryManager());
     Get.put(playHistoryRepository);
+    Get.put(PlayHistoryManager());
     Get.put(videoRepository);
     Get.put(wizardPlayerTorrent);
     Get.put(bangumiService);

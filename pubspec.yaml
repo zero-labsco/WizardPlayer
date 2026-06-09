@@ -57,6 +57,9 @@ dependencies:
   # 设备信息获取
   device_info_plus: ^10.1.2
 
+  # 图片缓存
+  cached_network_image: ^3.3.1
+
   # URL跳转
   url_launcher: ^6.3.1
 

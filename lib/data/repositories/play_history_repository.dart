@@ -47,7 +47,7 @@ abstract class IPlayHistoryRepository {
 /// 播放历史记录仓库实现
 class PlayHistoryRepository implements IPlayHistoryRepository {
   /// Shared Preferences 存储键
-  static const String _keyHistory = 'play_history';
+  static const String _keyHistory = 'play_histories';
 
   /// 存储接口实例
   final ISpUtil _sp;

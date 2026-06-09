@@ -1,7 +1,7 @@
-import 'dart:convert';
-
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
+import 'package:wizardplayer/data/models/play_history_model.dart';
+import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 
 /// 播放历史记录
 class PlayHistory {
@@ -106,40 +106,101 @@ class PlayHistoryManager extends GetxController {
   /// 最大保存记录数
   static const int _maxHistories = 100;
 
-  /// 存储键名
-  static const String _storageKey = 'play_histories';
+  /// 播放历史仓库
+  late final PlayHistoryRepository _repository;
 
   @override
   void onInit() {
     super.onInit();
+    _repository = Get.find<PlayHistoryRepository>();
     _loadHistories();
   }
 
-  /// 加载历史记录
+  /// 从仓库加载历史记录并转换为 PlayHistory
   Future<void> _loadHistories() async {
     try {
-      final jsonString = SpUtil.get<String>(_storageKey);
-      if (jsonString != null && jsonString.isNotEmpty) {
-        final List<dynamic> data = json.decode(jsonString);
-        final list = data
-            .map((e) => PlayHistory.fromJson(e as Map<String, dynamic>))
-            .toList();
-        histories.assignAll(list);
-        AppLogger().d('加载播放历史: ${list.length} 条');
+      final models = await _repository.getAllHistory();
+      final invalidIds = <String>[];
+
+      // 已知测试视频的 hashCode（用于检测脏数据）
+      // const testVideoHashCode = 'test_video_001'.hashCode.toString();
+
+      final list = <PlayHistory>[];
+      for (final model in models) {
+        final videoId = model.videoId;
+
+        // 检测脏数据：videoId 等于测试视频的 hashCode
+        if (videoId == _testVideoHashCode) {
+          AppLogger().w('🗑️ 检测到脏数据（测试视频 hashCode），videoId: $videoId');
+          invalidIds.add(videoId);
+          continue;
+        }
+
+        final history = _modelToPlayHistory(model);
+        if (history != null) {
+          list.add(history);
+        } else {
+          invalidIds.add(videoId);
+        }
       }
+
+      // 删除无效的历史记录
+      for (final id in invalidIds) {
+        await _repository.deleteHistory(id);
+        AppLogger().d('🗑️ 删除无效历史记录: $id');
+      }
+
+      histories.assignAll(list);
+      AppLogger().d('加载播放历史: ${list.length} 条');
     } catch (e, stackTrace) {
       AppLogger().e('加载历史记录失败', error: e, stackTrace: stackTrace);
     }
   }
 
-  /// 保存历史记录
-  Future<void> _saveHistories() async {
-    try {
-      final jsonString = json.encode(histories.map((e) => e.toJson()).toList());
-      await SpUtil.put(_storageKey, jsonString);
-    } catch (e, stackTrace) {
-      AppLogger().e('保存历史记录失败', error: e, stackTrace: stackTrace);
+  /// 测试视频的 subjectId（使用负数避免与真实番剧 id 冲突）
+  static const int _testVideoSubjectId = -999999;
+
+  /// 测试视频的 hashCode（用于检测脏数据）
+  static const String _testVideoHashCode = '609785636';
+
+  /// 将 PlayHistoryModel 转换为 PlayHistory
+  /// 如果 videoId 是修复前错误存储的 hashCode 值，返回 null 表示需要删除
+  PlayHistory? _modelToPlayHistory(PlayHistoryModel model) {
+    final videoId = model.videoId;
+
+    // 如果 videoId 是 "test_video_001" 这样的测试视频 ID
+    if (videoId == 'test_video_001') {
+      return PlayHistory(
+        subjectId: _testVideoSubjectId, // 测试视频用固定负数作为 subjectId
+        subjectName: model.videoTitle,
+        coverUrl: model.coverUrl.isNotEmpty ? model.coverUrl : null,
+        currentEpisode: model.episodeNumber,
+        totalEpisodes: (model.duration > 0) ? model.episodeNumber : 0,
+        lastPosition: model.position ~/ 1000,
+        totalDuration: model.duration ~/ 1000,
+        lastPlayedAt: model.lastWatchTime,
+      );
     }
+
+    // 正常情况：尝试解析 videoId 为整数
+    final subjectId = int.tryParse(videoId);
+    if (subjectId != null) {
+      return PlayHistory(
+        subjectId: subjectId,
+        subjectName: model.videoTitle,
+        coverUrl: model.coverUrl.isNotEmpty ? model.coverUrl : null,
+        currentEpisode: model.episodeNumber,
+        totalEpisodes: (model.duration > 0) ? model.episodeNumber : 0,
+        lastPosition: model.position ~/ 1000,
+        totalDuration: model.duration ~/ 1000,
+        lastPlayedAt: model.lastWatchTime,
+      );
+    }
+
+    // videoId 是修复前错误存储的 hashCode（无法解析为 int，且不是测试视频）
+    // 返回 null 表示这条记录无效
+    AppLogger().w('⚠️ 无效的历史记录，videoId: $videoId，将被删除');
+    return null;
   }
 
   /// 添加或更新历史记录
@@ -153,35 +214,35 @@ class PlayHistoryManager extends GetxController {
     required int totalDuration,
   }) async {
     final now = DateTime.now();
-    final existingIndex = histories.indexWhere((h) => h.subjectId == subjectId);
 
-    final newHistory = PlayHistory(
-      subjectId: subjectId,
-      subjectName: subjectName,
-      coverUrl: coverUrl,
-      currentEpisode: currentEpisode,
-      totalEpisodes: totalEpisodes,
-      lastPosition: lastPosition,
-      totalDuration: totalDuration,
-      lastPlayedAt: now,
+    // 转换为 PlayHistoryModel 并保存到仓库
+    final model = PlayHistoryModel(
+      id: subjectId.toString(),
+      videoId: subjectId.toString(),
+      videoTitle: subjectName,
+      coverUrl: coverUrl ?? '',
+      episodeNumber: currentEpisode,
+      position: lastPosition * 1000, // 秒转毫秒
+      duration: totalDuration * 1000,
+      lastWatchTime: now,
     );
 
+    await _repository.saveHistory(model);
+
+    // 更新本地列表
+    // updateHistory 中 videoId 是 subjectId.toString()，必定能正确解析
+    final existingIndex = histories.indexWhere((h) => h.subjectId == subjectId);
+    final newHistory = _modelToPlayHistory(model)!; // updateHistory 中必定不为 null
+
     if (existingIndex != -1) {
-      // 更新现有记录
       histories[existingIndex] = newHistory;
-      // 移动到最前面
-      histories.removeAt(existingIndex);
-      histories.insert(0, newHistory);
     } else {
-      // 添加新记录
       histories.insert(0, newHistory);
-      // 超出最大数量时删除最旧的
       if (histories.length > _maxHistories) {
         histories.removeLast();
       }
     }
 
-    await _saveHistories();
     AppLogger().d('更新播放历史: $subjectName - 第 $currentEpisode 集');
   }
 
@@ -193,14 +254,14 @@ class PlayHistoryManager extends GetxController {
   /// 删除历史记录
   Future<void> removeHistory(int subjectId) async {
     histories.removeWhere((h) => h.subjectId == subjectId);
-    await _saveHistories();
+    await _repository.deleteHistory(subjectId.toString());
     AppLogger().d('删除播放历史: $subjectId');
   }
 
   /// 清空所有历史
   Future<void> clearAll() async {
     histories.clear();
-    await _saveHistories();
+    await _repository.clearAllHistory();
     AppLogger().d('清空所有播放历史');
   }
 

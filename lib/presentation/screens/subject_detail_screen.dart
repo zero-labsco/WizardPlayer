@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizardplayer/core/services/bangumi_service.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
@@ -116,7 +117,13 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
           children: [
             // 背景图片
             if (_subject.image != null)
-              Image.network(_subject.image!, fit: BoxFit.cover)
+              CachedNetworkImage(
+                imageUrl: _subject.image!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(color: AppColors.grey300),
+                errorWidget: (_, __, ___) =>
+                    Container(color: AppColors.grey300),
+              )
             else
               Container(color: AppColors.grey300),
             // 渐变遮罩
@@ -141,11 +148,22 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: _subject.image != null
-                        ? Image.network(
-                            _subject.image!,
+                        ? CachedNetworkImage(
+                            imageUrl: _subject.image!,
                             width: 100,
                             height: 140,
                             fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(
+                              width: 100,
+                              height: 140,
+                              color: AppColors.grey400,
+                            ),
+                            errorWidget: (_, __, ___) => Container(
+                              width: 100,
+                              height: 140,
+                              color: AppColors.grey400,
+                              child: const Icon(Icons.movie),
+                            ),
                           )
                         : Container(
                             width: 100,
@@ -423,11 +441,22 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: subject.image != null
-                        ? Image.network(
-                            subject.image!,
+                        ? CachedNetworkImage(
+                            imageUrl: subject.image!,
                             width: 120,
                             height: 160,
                             fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(
+                              width: 120,
+                              height: 160,
+                              color: AppColors.grey300,
+                            ),
+                            errorWidget: (_, __, ___) => Container(
+                              width: 120,
+                              height: 160,
+                              color: AppColors.grey300,
+                              child: const Icon(Icons.movie),
+                            ),
                           )
                         : Container(
                             width: 120,

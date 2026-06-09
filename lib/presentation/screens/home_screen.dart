@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
-import 'package:wizardplayer/core/widgets/video_grid.dart';
-import 'package:wizardplayer/core/services/play_history_service.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
-import 'package:wizardplayer/presentation/screens/search_screen.dart';
 import 'package:wizardplayer/presentation/screens/subject_detail_screen.dart';
-import 'package:wizardplayer/presentation/screens/player_screen.dart';
-import 'package:wizard_player_datasource/wizard_player_datasource.dart';
+import 'package:wizardplayer/presentation/screens/search_screen.dart';
+import 'package:wizardplayer/presentation/widgets/home_content_widget.dart';
+import 'package:wizardplayer/presentation/widgets/discover_content_widget.dart';
+import 'package:wizardplayer/presentation/widgets/history_content_widget.dart';
+import 'package:wizardplayer/presentation/widgets/favorite_content_widget.dart';
+import 'package:wizardplayer/core/widgets/video_grid.dart';
 import 'package:wizardplayer/core/managers/theme_manager.dart';
 import 'package:wizardplayer/core/managers/language_manager.dart';
 import 'package:wizardplayer/enum/language.dart';
-import 'package:wizardplayer/core/theme/app_colors.dart';
+import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 
 /// 首页 - 自适应布局
 /// 移动端：底部导航 + 单列内容
@@ -26,21 +27,83 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  bool _isLoading = true;
 
   // 排行榜数据
   List<VideoGridItem> _rankingList = [];
+  bool _rankingLoading = true;
 
   // 最新番剧数据
   List<VideoGridItem> _latestList = [];
+  bool _latestLoading = true;
 
   // 每日放送数据
   final Map<String, List<VideoGridItem>> _calendarData = {};
+  bool _calendarLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // 并行加载所有数据，但页面结构立即显示
+    _loadRanking();
+    _loadLatest();
+    _loadCalendar();
+  }
+
+  Future<void> _loadRanking() async {
+    try {
+      final videoRepository = Get.find<VideoRepository>();
+      final videos = await videoRepository.getRanking();
+      if (mounted) {
+        setState(() {
+          _rankingList = videos.map((video) {
+            return VideoGridItem(
+              title: video.title,
+              subtitle: video.subtitle,
+              coverUrl: video.coverUrl,
+              rating: video.rating,
+              viewCount: video.viewCount?.toString(),
+              tags: video.tags.take(3).toList(),
+              onTap: () =>
+                  Get.to(() => SubjectDetailScreen(subjectId: video.id)),
+            );
+          }).toList();
+          _rankingLoading = false;
+        });
+      }
+      AppLogger().d('排行榜数据加载完成: ${_rankingList.length}');
+    } catch (e, stackTrace) {
+      AppLogger().e('排行榜加载失败', error: e, stackTrace: stackTrace);
+      if (mounted) setState(() => _rankingLoading = false);
+    }
+  }
+
+  Future<void> _loadLatest() async {
+    try {
+      final videoRepository = Get.find<VideoRepository>();
+      final videos = await videoRepository.getLatest();
+      if (mounted) {
+        setState(() {
+          _latestList = videos.map(_videoInfoToGridItem).toList();
+          _latestLoading = false;
+        });
+      }
+      AppLogger().d('最新番剧数据加载完成: ${_latestList.length}');
+    } catch (e, stackTrace) {
+      AppLogger().e('最新番剧加载失败', error: e, stackTrace: stackTrace);
+      if (mounted) setState(() => _latestLoading = false);
+    }
+  }
+
+  Future<void> _loadCalendar() async {
+    try {
+      // TODO: 调用日历接口
+      if (mounted) {
+        setState(() => _calendarLoading = false);
+      }
+    } catch (e, stackTrace) {
+      AppLogger().e('每日放送加载失败', error: e, stackTrace: stackTrace);
+      if (mounted) setState(() => _calendarLoading = false);
+    }
   }
 
   /// 将 VideoInfo 转换为 VideoGridItem
@@ -54,49 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
       tags: info.tags.take(3).toList(),
       onTap: () => Get.to(() => SubjectDetailScreen(subjectId: info.id)),
     );
-  }
-
-  Future<void> _loadData() async {
-    try {
-      final videoRepository = Get.find<VideoRepository>();
-
-      // 并行加载数据
-      final results = await Future.wait([
-        videoRepository.getRanking(),
-        videoRepository.getLatest(),
-      ]);
-
-      setState(() {
-        // 将 VideoInfo 列表转换为 VideoGridItem（排行榜）
-        final rankingVideos = results[0];
-        _rankingList = rankingVideos.map((video) {
-          return VideoGridItem(
-            title: video.title,
-            subtitle: video.subtitle,
-            coverUrl: video.coverUrl,
-            rating: video.rating,
-            viewCount: video.viewCount?.toString(),
-            tags: video.tags.take(3).toList(),
-            onTap: () => Get.to(() => SubjectDetailScreen(subjectId: video.id)),
-          );
-        }).toList();
-
-        // 将 VideoInfo 列表转换为 VideoGridItem（最新番剧）
-        final latestVideos = results[1];
-        _latestList = latestVideos.map(_videoInfoToGridItem).toList();
-
-        _isLoading = false;
-      });
-
-      AppLogger().d(
-        '首页数据加载完成，排行榜: ${_rankingList.length}，最新: ${_latestList.length}',
-      );
-    } catch (e, stackTrace) {
-      AppLogger().e('首页数据加载失败', error: e, stackTrace: stackTrace);
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   @override
@@ -268,483 +288,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildContent(BuildContext context) {
     switch (_selectedIndex) {
       case 0:
-        return _buildHomeContent(context);
+        return HomeContentWidget(
+          latestList: _latestList,
+          rankingList: _rankingList,
+          calendarData: _calendarData,
+          latestLoading: _latestLoading,
+          rankingLoading: _rankingLoading,
+          calendarLoading: _calendarLoading,
+        );
       case 1:
-        return _buildDiscoverContent(context);
+        return const DiscoverContentWidget();
       case 2:
-        return _buildHistoryContent(context);
+        return const HistoryContentWidget();
       case 3:
-        return _buildFavoriteContent(context);
+        return const FavoriteContentWidget();
       default:
-        return _buildHomeContent(context);
-    }
-  }
-
-  /// 首页内容
-  Widget _buildHomeContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 正在观看
-          _buildSectionTitle(context, '📺 ${l10n.continueWatching}'),
-          const SizedBox(height: 12),
-          _buildWatchingSection(context),
-          const SizedBox(height: 32),
-
-          // 最新番剧（来自 VideoRepository）
-          if (_latestList.isNotEmpty) ...[
-            _buildSectionTitle(context, '✨ ${l10n.latestUpdate}'),
-            const SizedBox(height: 12),
-            SizedBox(height: 280, child: VideoGrid(items: _latestList)),
-            const SizedBox(height: 32),
-          ],
-
-          // 每日放送
-          _buildSectionTitle(context, '📅 ${l10n.todayUpdate}'),
-          const SizedBox(height: 12),
-          _buildCalendarSection(context),
-          const SizedBox(height: 32),
-
-          // 周排行榜
-          _buildSectionTitle(context, '🏆 ${l10n.weeklyRanking}'),
-          const SizedBox(height: 12),
-          SizedBox(height: 280, child: VideoGrid(items: _rankingList)),
-        ],
-      ),
-    );
-  }
-
-  /// 发现页面
-  Widget _buildDiscoverContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 搜索框
-          GestureDetector(
-            onTap: () {
-              Get.to(() => const SearchScreen());
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search, color: Theme.of(context).hintColor),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.searchPlaceholder,
-                    style: TextStyle(color: Theme.of(context).hintColor),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // 测试视频
-          _buildTestVideoSection(context),
-          const SizedBox(height: 32),
-
-          // 分类
-          _buildCategorySection(context),
-        ],
-      ),
-    );
-  }
-
-  /// 测试视频区域
-  Widget _buildTestVideoSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.testVideo, style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        Card(
-          child: ListTile(
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 80,
-                height: 60,
-                color: AppColors.info.withValues(alpha: 0.3),
-                child: const Icon(Icons.play_circle_filled, size: 32),
-              ),
-            ),
-            title: Text(l10n.bigBuckBunny),
-            subtitle: Text(l10n.testOnlineVideoPlay),
-            trailing: ElevatedButton.icon(
-              onPressed: () => _playTestVideo(context),
-              icon: const Icon(Icons.play_arrow),
-              label: Text(l10n.play),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 播放测试视频
-  void _playTestVideo(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    // 创建测试用的 VideoInfo
-    final testVideo = VideoInfo(
-      id: 'test_video_001',
-      title: l10n.testVideo,
-      subtitle: l10n.testVideoDescription,
-      coverUrl:
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg',
-      sourceType: 'test',
-      episodes: [
-        const EpisodeInfo(
-          id: 'test_ep_001',
-          title: '测试视频',
-          episodeNumber: 1,
-          sourceType: 'test',
-        ),
-      ],
-      tags: ['测试', '动画'],
-      rating: 5.0,
-      viewCount: 1000000,
-    );
-
-    // 跳转到播放器
-    Get.to(() => PlayerScreen(video: testVideo, startEpisode: 1));
-  }
-
-  /// 历史页面
-  Widget _buildHistoryContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final historyManager = Get.find<PlayHistoryManager>();
-    final histories = historyManager.histories;
-
-    if (histories.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history, size: 64, color: Theme.of(context).hintColor),
-            const SizedBox(height: 16),
-            Text(
-              l10n.noResults,
-              style: TextStyle(
-                color: Theme.of(context).hintColor,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: histories.length,
-      itemBuilder: (context, index) {
-        final history = histories[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: history.coverUrl != null
-                  ? Image.network(
-                      history.coverUrl!,
-                      width: 60,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      width: 60,
-                      height: 80,
-                      color: AppColors.grey300,
-                      child: const Icon(Icons.movie),
-                    ),
-            ),
-            title: Text(
-              history.subjectName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.episodeNumber(history.currentEpisode)),
-                const SizedBox(height: 4),
-                LinearProgressIndicator(
-                  value: history.progress,
-                  backgroundColor: Theme.of(context).disabledColor,
-                ),
-              ],
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.play_arrow),
-              onPressed: () {
-                // TODO: 跳转到播放页
-              },
-            ),
-          ),
+        return HomeContentWidget(
+          latestList: _latestList,
+          rankingList: _rankingList,
+          calendarData: _calendarData,
+          latestLoading: _latestLoading,
+          rankingLoading: _rankingLoading,
+          calendarLoading: _calendarLoading,
         );
-      },
-    );
-  }
-
-  /// 收藏页面
-  Widget _buildFavoriteContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.favorite_border,
-            size: 64,
-            color: Theme.of(context).hintColor,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.noResults,
-            style: TextStyle(color: Theme.of(context).hintColor, fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 正在观看区域
-  Widget _buildWatchingSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final historyManager = Get.find<PlayHistoryManager>();
-    final watching = historyManager.getWatching();
-
-    if (watching.isEmpty) {
-      return Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(child: Text(l10n.noResults)),
-      );
     }
-
-    return SizedBox(
-      height: 180,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: watching.length,
-        itemBuilder: (context, index) {
-          final history = watching[index];
-          return Container(
-            width: 120,
-            margin: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                // TODO: 跳转到播放页
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: history.coverUrl != null
-                            ? Image.network(
-                                history.coverUrl!,
-                                width: 120,
-                                height: 140,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                width: 120,
-                                height: 140,
-                                color: AppColors.grey300,
-                                child: const Icon(Icons.movie),
-                              ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [AppColors.black80, Colors.transparent],
-                            ),
-                          ),
-                          child: Text(
-                            l10n.episodeNumber(history.currentEpisode),
-                            style: TextStyle(
-                              color: AppColors.darkTextPrimary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    history.subjectName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// 每日放送区域
-  Widget _buildCalendarSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final today = DateTime.now().weekday;
-    final weekdays = [
-      l10n.sunday,
-      l10n.monday,
-      l10n.tuesday,
-      l10n.wednesday,
-      l10n.thursday,
-      l10n.friday,
-      l10n.saturday,
-    ];
-    final todayName = weekdays[today == 7 ? 0 : today];
-
-    final todayAnimes = _calendarData[todayName] ?? [];
-
-    if (todayAnimes.isEmpty) {
-      return Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(child: Text(l10n.noUpdateToday)),
-      );
-    }
-
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: todayAnimes.length,
-        itemBuilder: (context, index) {
-          final anime = todayAnimes[index];
-          return Container(
-            width: 80,
-            margin: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: anime.onTap,
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: anime.coverUrl != null
-                        ? Image.network(
-                            anime.coverUrl!,
-                            width: 80,
-                            height: 70,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            width: 80,
-                            height: 70,
-                            color: AppColors.grey300,
-                            child: const Icon(Icons.movie),
-                          ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    anime.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// 分类区域
-  Widget _buildCategorySection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final categories = [
-      {'icon': '🎬', 'name': l10n.anime},
-      {'icon': '🎭', 'name': l10n.movie},
-      {'icon': '📺', 'name': l10n.tvSeries},
-      {'icon': '🎮', 'name': l10n.category},
-      {'icon': '🎵', 'name': l10n.latest},
-    ];
-
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: categories.map((cat) {
-        return InkWell(
-          onTap: () {
-            // TODO: 跳转到分类页
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: (MediaQuery.of(context).size.width - 48) / 2,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Text(cat['icon']!, style: const TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
-                Text(
-                  cat['name']!,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// 区块标题
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    return Text(title, style: Theme.of(context).textTheme.titleLarge);
   }
 
   /// 显示设置对话框
