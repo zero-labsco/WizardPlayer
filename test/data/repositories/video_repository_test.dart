@@ -5,6 +5,7 @@ import 'package:wizardplayer/data/repositories/video_repository.dart';
 
 /// 手动 Mock VideoDataSource 实现
 class MockVideoDataSource implements VideoDataSource {
+  @override
   final DataSourceConfig config;
   List<VideoInfo> searchResult = [];
   List<VideoInfo> latestResult = [];
@@ -115,7 +116,7 @@ void main() {
           type: SourceType.torrent,
         ),
         searchResult: [
-          VideoInfo(id: 'bt1', title: 'BT Video', sourceType: 'mikan'),
+          const VideoInfo(id: 'bt1', title: 'BT Video', sourceType: 'mikan'),
         ],
       );
       final mockBtBackupSource = MockVideoDataSource(
@@ -125,7 +126,7 @@ void main() {
           type: SourceType.torrent,
         ),
         searchResult: [
-          VideoInfo(id: 'dmhy1', title: 'DMHY Video', sourceType: 'dmhy'),
+          const VideoInfo(id: 'dmhy1', title: 'DMHY Video', sourceType: 'dmhy'),
         ],
       );
       final mockOnlineSource = MockVideoDataSource(
@@ -135,7 +136,7 @@ void main() {
           type: SourceType.online,
         ),
         searchResult: [
-          VideoInfo(
+          const VideoInfo(
             id: 'online1',
             title: 'Online Video',
             sourceType: 'anispace',
@@ -177,7 +178,7 @@ void main() {
           type: SourceType.torrent,
         ),
         searchResult: [
-          VideoInfo(id: 'dmhy1', title: 'DMHY Video', sourceType: 'dmhy'),
+          const VideoInfo(id: 'dmhy1', title: 'DMHY Video', sourceType: 'dmhy'),
         ],
       );
       final mockOnlineSource = MockVideoDataSource(
@@ -187,7 +188,7 @@ void main() {
           type: SourceType.online,
         ),
         searchResult: [
-          VideoInfo(
+          const VideoInfo(
             id: 'online1',
             title: 'Online Video',
             sourceType: 'anispace',
@@ -303,7 +304,7 @@ void main() {
     /// 测试场景：指定从 Mikan 获取详情
     /// 验证点：正确调用 Mikan 源并返回结果
     test('指定Mikan源时正确获取视频详情', () async {
-      final expectedDetail = VideoInfo(
+      const expectedDetail = VideoInfo(
         id: videoId,
         title: 'Mikan Video',
         sourceType: 'mikan',
@@ -340,7 +341,7 @@ void main() {
     /// 测试场景：指定从 DMHY 获取详情
     /// 验证点：正确调用 DMHY 源并返回结果
     test('指定DMHY源时正确获取视频详情', () async {
-      final expectedDetail = VideoInfo(
+      const expectedDetail = VideoInfo(
         id: videoId,
         title: 'DMHY Video',
         sourceType: 'dmhy',
@@ -379,7 +380,7 @@ void main() {
     /// 测试场景：指定从 AniSpace 获取详情
     /// 验证点：正确调用 AniSpace 源并返回结果
     test('指定AniSpace源时正确获取视频详情', () async {
-      final expectedDetail = VideoInfo(
+      const expectedDetail = VideoInfo(
         id: videoId,
         title: 'AniSpace Video',
         sourceType: 'anispace',
@@ -416,7 +417,7 @@ void main() {
     /// 测试场景：指定源失败，自动降级到备用源
     /// 验证点：Mikan 失败后自动尝试 DMHY
     test('指定源失败时自动降级到备用源', () async {
-      final expectedDetail = VideoInfo(
+      const expectedDetail = VideoInfo(
         id: videoId,
         title: 'DMHY Video',
         sourceType: 'dmhy',
@@ -519,7 +520,7 @@ void main() {
     /// 验证点：正确调用元数据源并返回结果
     test('正确获取视频列表', () async {
       final expectedList = <VideoInfo>[
-        VideoInfo(id: '1', title: 'Video 1', sourceType: 'bangumi'),
+        const VideoInfo(id: '1', title: 'Video 1', sourceType: 'bangumi'),
       ];
 
       final mockMetaSource = MockVideoDataSource(
@@ -570,7 +571,7 @@ void main() {
     /// 验证点：正确调用元数据源并返回排行榜数据
     test('正确获取排行榜数据', () async {
       final expectedList = <VideoInfo>[
-        VideoInfo(id: '1', title: 'Top 1', sourceType: 'bangumi'),
+        const VideoInfo(id: '1', title: 'Top 1', sourceType: 'bangumi'),
       ];
 
       final mockMetaSource = MockVideoDataSource(
