@@ -344,6 +344,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
       return Video(
         controller: VideoController(platformPlayer),
         fill: Colors.black,
+        controls: NoVideoControls,
       );
     }
     return Container(color: Colors.black);
