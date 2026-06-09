@@ -9,6 +9,10 @@ import 'package:wizardplayer/presentation/screens/search_screen.dart';
 import 'package:wizardplayer/presentation/screens/subject_detail_screen.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
+import 'package:wizardplayer/core/managers/theme_manager.dart';
+import 'package:wizardplayer/core/managers/language_manager.dart';
+import 'package:wizardplayer/enum/language.dart';
+import 'package:wizardplayer/core/theme/app_colors.dart';
 
 /// 首页 - 自适应布局
 /// 移动端：底部导航 + 单列内容
@@ -339,11 +343,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search, color: Colors.grey),
+                  Icon(Icons.search, color: Theme.of(context).hintColor),
                   const SizedBox(width: 8),
                   Text(
                     l10n.searchPlaceholder,
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Theme.of(context).hintColor),
                   ),
                 ],
               ),
@@ -364,10 +368,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 测试视频区域
   Widget _buildTestVideoSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('🧪 测试视频', style: Theme.of(context).textTheme.titleLarge),
+        Text(l10n.testVideo, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         Card(
           child: ListTile(
@@ -376,16 +382,16 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 width: 80,
                 height: 60,
-                color: Colors.blue.shade200,
+                color: AppColors.info.withValues(alpha: 0.3),
                 child: const Icon(Icons.play_circle_filled, size: 32),
               ),
             ),
-            title: const Text('Big Buck Bunny'),
-            subtitle: const Text('测试在线视频播放'),
+            title: Text(l10n.bigBuckBunny),
+            subtitle: Text(l10n.testOnlineVideoPlay),
             trailing: ElevatedButton.icon(
               onPressed: () => _playTestVideo(context),
               icon: const Icon(Icons.play_arrow),
-              label: const Text('播放'),
+              label: Text(l10n.play),
             ),
           ),
         ),
@@ -395,16 +401,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 播放测试视频
   void _playTestVideo(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     // 创建测试用的 VideoInfo
-    const testVideo = VideoInfo(
+    final testVideo = VideoInfo(
       id: 'test_video_001',
-      title: '测试视频',
-      subtitle: '国内可播放',
+      title: l10n.testVideo,
+      subtitle: l10n.testVideoDescription,
       coverUrl:
           'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg',
       sourceType: 'test',
       episodes: [
-        EpisodeInfo(
+        const EpisodeInfo(
           id: 'test_ep_001',
           title: '测试视频',
           episodeNumber: 1,
@@ -417,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     // 跳转到播放器
-    Get.to(() => const PlayerScreen(video: testVideo, startEpisode: 1));
+    Get.to(() => PlayerScreen(video: testVideo, startEpisode: 1));
   }
 
   /// 历史页面
@@ -431,11 +439,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.history, size: 64, color: Colors.grey),
+            Icon(Icons.history, size: 64, color: Theme.of(context).hintColor),
             const SizedBox(height: 16),
             Text(
               l10n.noResults,
-              style: const TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -462,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : Container(
                       width: 60,
                       height: 80,
-                      color: Colors.grey.shade300,
+                      color: AppColors.grey300,
                       child: const Icon(Icons.movie),
                     ),
             ),
@@ -478,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: history.progress,
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: Theme.of(context).disabledColor,
                 ),
               ],
             ),
@@ -501,11 +512,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+          Icon(
+            Icons.favorite_border,
+            size: 64,
+            color: Theme.of(context).hintColor,
+          ),
           const SizedBox(height: 16),
           Text(
             l10n.noResults,
-            style: const TextStyle(color: Colors.grey, fontSize: 16),
+            style: TextStyle(color: Theme.of(context).hintColor, fontSize: 16),
           ),
         ],
       ),
@@ -560,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : Container(
                                 width: 120,
                                 height: 140,
-                                color: Colors.grey.shade300,
+                                color: AppColors.grey300,
                                 child: const Icon(Icons.movie),
                               ),
                       ),
@@ -573,20 +588,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             horizontal: 8,
                             vertical: 4,
                           ),
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.8),
-                                Colors.transparent,
-                              ],
+                              colors: [AppColors.black80, Colors.transparent],
                             ),
                           ),
                           child: Text(
                             l10n.episodeNumber(history.currentEpisode),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: AppColors.darkTextPrimary,
                               fontSize: 12,
                             ),
                           ),
@@ -664,7 +676,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Container(
                             width: 80,
                             height: 70,
-                            color: Colors.grey.shade300,
+                            color: AppColors.grey300,
                             child: const Icon(Icons.movie),
                           ),
                   ),
@@ -738,6 +750,9 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 显示设置对话框
   void _showSettingsDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final themeManager = Get.find<ThemeManager>();
+    final languageManager = Get.find<LanguageManager>();
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -750,26 +765,53 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // 主题设置
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: Text(l10n.darkMode),
-                trailing: Switch(
-                  value: Theme.of(context).brightness == Brightness.dark,
-                  onChanged: (value) {
-                    // TODO: 切换主题
-                    Navigator.pop(context);
-                  },
-                ),
+              GetBuilder<ThemeManager>(
+                init: themeManager,
+                builder: (_) {
+                  final isDark =
+                      themeManager.themeMode.value == ThemeMode.dark ||
+                      (themeManager.themeMode.value == ThemeMode.system &&
+                          MediaQuery.of(context).platformBrightness ==
+                              Brightness.dark);
+                  return ListTile(
+                    leading: const Icon(Icons.dark_mode),
+                    title: Text(l10n.darkMode),
+                    trailing: Switch(
+                      value: isDark,
+                      onChanged: (value) {
+                        themeManager.changeTheme(
+                          value ? ThemeMode.dark : ThemeMode.light,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
               const Divider(),
               // 语言设置
-              ListTile(
-                leading: const Icon(Icons.language),
-                title: Text(l10n.language),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.pop(context);
-                  // TODO: 跳转到语言设置
+              GetBuilder<LanguageManager>(
+                init: languageManager,
+                builder: (_) {
+                  return ListTile(
+                    leading: const Icon(Icons.language),
+                    title: Text(l10n.language),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          languageManager.language.value == AppLanguage.chinese
+                              ? '中文'
+                              : 'English',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                    onTap: () {
+                      _showLanguageDialog(context, languageManager, l10n);
+                    },
+                  );
                 },
               ),
               const Divider(),
@@ -780,11 +822,89 @@ class _HomeScreenState extends State<HomeScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.pop(context);
-                  // TODO: 显示关于信息
+                  _showAboutDialog(context, l10n);
                 },
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  /// 显示语言选择对话框
+  void _showLanguageDialog(
+    BuildContext context,
+    LanguageManager languageManager,
+    AppLocalizations l10n,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.language),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(l10n.chinese),
+                leading: Radio<AppLanguage>(
+                  value: AppLanguage.chinese,
+                  groupValue: languageManager.language.value,
+                ),
+                onTap: () {
+                  languageManager.changeLanguage(AppLanguage.chinese);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text(l10n.english),
+                leading: Radio<AppLanguage>(
+                  value: AppLanguage.english,
+                  groupValue: languageManager.language.value,
+                ),
+                onTap: () {
+                  languageManager.changeLanguage(AppLanguage.english);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 显示关于对话框
+  void _showAboutDialog(BuildContext context, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.about),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Wizard Player',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text('v1.0.0', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 16),
+              Text(
+                l10n.appDescription,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.ok),
+            ),
+          ],
         );
       },
     );

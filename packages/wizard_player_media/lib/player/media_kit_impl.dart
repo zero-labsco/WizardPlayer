@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:amis_flutter_utils/utils.dart';
 
 import 'wizard_player.dart';
 import 'playback_state.dart';
@@ -34,13 +35,13 @@ class MediaKitWizard extends WizardPlayer {
     // 当前播放位置
     _positionSub = _player.stream.position.listen((pos) {
       currentPosition.value = pos;
-      print('[MediaKitWizard] Position updated: $pos');
+      AppLogger().d('[MediaKitWizard] Position updated: $pos');
     });
 
     // 总时长
     _durationSub = _player.stream.duration.listen((d) {
       duration.value = d;
-      print('[MediaKitWizard] Duration updated: $d');
+      AppLogger().d('[MediaKitWizard] Duration updated: $d');
     });
 
     // 缓冲进度（1.2.x: streams.buffer 返回 Duration，计算百分比）
@@ -87,9 +88,9 @@ class MediaKitWizard extends WizardPlayer {
       if (_disposed) return;
 
       // media_kit: Media 支持 http(s)://、file://、magnet:? 等
-      print('[MediaKitWizard] Opening media: $uri');
+      AppLogger().d('[MediaKitWizard] Opening media: $uri');
       await _player.open(Media(uri), play: true);
-      print('[MediaKitWizard] Media opened successfully');
+      AppLogger().d('[MediaKitWizard] Media opened successfully');
 
       // 应用当前音量和速度
       await _player.setVolume(volume.value * 100.0);
@@ -98,7 +99,7 @@ class MediaKitWizard extends WizardPlayer {
       // 延迟一小段时间等待流事件触发
       await Future.delayed(const Duration(milliseconds: 100));
     } catch (e) {
-      print('[MediaKitWizard] Error playing uri: $e');
+      AppLogger().e('[MediaKitWizard] Error playing uri: $e');
       updatePlaybackState(PlaybackState.error);
       rethrow;
     }

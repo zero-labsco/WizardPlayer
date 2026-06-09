@@ -209,9 +209,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearAllHistory => '清除所有历史';
 
   @override
-  String get searchAnime => '搜索番剧';
-
-  @override
   String getVideoList(String type, int page) {
     return '获取$type视频列表，第$page页';
   }
@@ -297,6 +294,89 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get about => '关于';
+
+  @override
+  String get appDescription => '一个支持在线视频和 BT 种子播放的 Flutter 跨平台应用';
+
+  @override
+  String get ok => '确定';
+
+  @override
+  String get searchingSource => '正在搜索资源...';
+
+  @override
+  String episodesCount(int count) {
+    return '$count 集';
+  }
+
+  @override
+  String get selectEpisodes => '选集';
+
+  @override
+  String get relatedRecommendations => '相关推荐';
+
+  @override
+  String get testVideo => '测试视频';
+
+  @override
+  String get bigBuckBunny => 'Big Buck Bunny';
+
+  @override
+  String get testOnlineVideoPlay => '测试在线视频播放';
+
+  @override
+  String get testVideoDescription => '国内可播放';
+
+  @override
+  String get searchAnime => '搜索番剧';
+
+  @override
+  String get enterKeywordToSearchAnime => '输入关键词搜索番剧';
+
+  @override
+  String get noResourceFound => '暂时没有找到这个番剧的播放资源';
+
+  @override
+  String searchResultCount(int count) {
+    return '搜索到 $count 个结果';
+  }
+
+  @override
+  String tryGetVideoDetail(String source, String id) {
+    return '尝试从 $source 获取视频详情，ID: $id';
+  }
+
+  @override
+  String videoDetailSuccess(int count) {
+    return '视频详情获取成功，剧集数: $count';
+  }
+
+  @override
+  String get getVideoDetailFailed => '获取视频详情失败';
+
+  @override
+  String searchResultsHaveEpisodes(int count) {
+    return '搜索结果已有 $count 个剧集';
+  }
+
+  @override
+  String episodePrefix(int index) {
+    return '第$index集';
+  }
+
+  @override
+  String jumpToPlayer(int episodeNumber) {
+    return '跳转到播放器，剧集号: $episodeNumber';
+  }
+
+  @override
+  String get searchResourceFailed => '搜索资源失败';
+
+  @override
+  String get loadFailed => '加载失败';
+
+  @override
+  String get searchResourceError => '搜索播放资源时出错，请重试';
 
   @override
   String get sunday => '周日';

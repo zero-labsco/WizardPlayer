@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wizardplayer/core/theme/app_colors.dart';
 
 /// 视频卡片组件
 class VideoCard extends StatelessWidget {
@@ -62,11 +63,11 @@ class VideoCard extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : Colors.white,
+          color: isDark ? AppColors.grey900 : AppColors.lightCard,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black54.withAlpha(16),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -104,7 +105,7 @@ class VideoCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
+                          color: AppColors.black70,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
@@ -112,14 +113,14 @@ class VideoCard extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.star,
-                              color: Colors.amber,
+                              color: AppColors.warning,
                               size: 12,
                             ),
                             const SizedBox(width: 2),
                             Text(
                               rating!.toStringAsFixed(1),
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.darkTextPrimary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -139,13 +140,13 @@ class VideoCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.7),
+                          color: AppColors.black70,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           viewCount!,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.darkTextPrimary,
                             fontSize: 9,
                           ),
                         ),
@@ -200,9 +201,9 @@ class VideoCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: Colors.grey[300],
+      color: AppColors.grey300,
       child: const Center(
-        child: Icon(Icons.movie, size: 40, color: Colors.grey),
+        child: Icon(Icons.movie, size: 40, color: AppColors.grey500),
       ),
     );
   }

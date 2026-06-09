@@ -4,6 +4,7 @@ import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/services/bangumi_service.dart';
 import 'package:wizardplayer/core/widgets/video_grid.dart';
 import 'package:wizardplayer/presentation/screens/subject_detail_screen.dart';
+import 'package:wizardplayer/core/l10n/app_localizations.dart';
 
 /// 搜索页面
 class SearchScreen extends StatefulWidget {
@@ -79,15 +80,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
           focusNode: _focusNode,
           decoration: InputDecoration(
-            hintText: '搜索番剧...',
+            hintText: l10n.searchPlaceholder,
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.grey.shade400),
+            hintStyle: TextStyle(color: Theme.of(context).hintColor),
           ),
           onSubmitted: _search,
           textInputAction: TextInputAction.search,
@@ -104,6 +106,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildBody() {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -113,11 +117,16 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.search, size: 64, color: Theme.of(context).hintColor),
             const SizedBox(height: 16),
             Text(
-              _lastKeyword.isEmpty ? '输入关键词搜索番剧' : '未找到相关结果',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+              _lastKeyword.isEmpty
+                  ? l10n.enterKeywordToSearchAnime
+                  : l10n.noResults,
+              style: TextStyle(
+                color: Theme.of(context).hintColor,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -130,8 +139,8 @@ class _SearchScreenState extends State<SearchScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '找到 ${_searchResults.length} 个结果',
-            style: TextStyle(color: Colors.grey.shade600),
+            l10n.foundResults(_searchResults.length),
+            style: TextStyle(color: Theme.of(context).hintColor),
           ),
           const SizedBox(height: 16),
           Expanded(child: VideoGrid(items: _searchResults)),

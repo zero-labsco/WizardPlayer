@@ -92,7 +92,6 @@
   "noFavorites": "No favorites yet",
   "clearHistoryConfirm": "Are you sure you want to clear all history?",
   "clearAllHistory": "Clear All History",
-  "searchAnime": "Search Anime",
   "getVideoList": "Getting {type} video list, page {page}",
   "@getVideoList": {
     "placeholders": {
@@ -182,6 +181,114 @@
   },
   "switchSourceFailed": "Failed to switch source",
   "about": "About",
+  "appDescription": "A cross-platform Flutter app that supports online video and BT torrent playback",
+  "ok": "OK",
+  "searchingSource": "Searching for sources...",
+  "episodesCount": "{count} episodes",
+  "@episodesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectEpisodes": "Episodes",
+  "relatedRecommendations": "Related Recommendations",
+  "testVideo": "Test Video",
+  "@testVideo": {
+    "description": "Test video title"
+  },
+  "bigBuckBunny": "Big Buck Bunny",
+  "@bigBuckBunny": {
+    "description": "Big Buck Bunny test video name"
+  },
+  "testOnlineVideoPlay": "Test online video playback",
+  "@testOnlineVideoPlay": {
+    "description": "Test online video playback description"
+  },
+  "testVideoDescription": "Playable in China",
+  "@testVideoDescription": {
+    "description": "Test video description"
+  },
+  "searchAnime": "Search Anime",
+  "@searchAnime": {
+    "description": "Search anime"
+  },
+  "enterKeywordToSearchAnime": "Enter keyword to search anime",
+  "@enterKeywordToSearchAnime": {
+    "description": "Enter keyword to search anime hint"
+  },
+  "noResourceFound": "No playback resources found for this anime",
+  "@noResourceFound": {
+    "description": "No resources found"
+  },
+  "searchResultCount": "Found {count} results",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tryGetVideoDetail": "Trying to get video detail from {source}, ID: {id}",
+  "@tryGetVideoDetail": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDetailSuccess": "Video detail obtained successfully, {count} episodes",
+  "@videoDetailSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "getVideoDetailFailed": "Failed to get video detail",
+  "@getVideoDetailFailed": {
+    "description": "Failed to get video detail"
+  },
+  "searchResultsHaveEpisodes": "Search results already have {count} episodes",
+  "@searchResultsHaveEpisodes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "episodePrefix": "Episode {index}",
+  "@episodePrefix": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "jumpToPlayer": "Jumping to player, episode: {episodeNumber}",
+  "@jumpToPlayer": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResourceFailed": "Failed to search resources",
+  "@searchResourceFailed": {
+    "description": "Failed to search resources"
+  },
+  "loadFailed": "Load failed",
+  "@loadFailed": {
+    "description": "Load failed"
+  },
+  "searchResourceError": "Error searching for playback resources, please try again",
+  "@searchResourceError": {
+    "description": "Error searching for playback resources"
+  },
   "sunday": "Sunday",
   "monday": "Monday",
   "tuesday": "Tuesday",

@@ -482,12 +482,6 @@ abstract class AppLocalizations {
   /// **'Clear All History'**
   String get clearAllHistory;
 
-  /// No description provided for @searchAnime.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Anime'**
-  String get searchAnime;
-
   /// No description provided for @getVideoList.
   ///
   /// In en, this message translates to:
@@ -625,6 +619,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About'**
   String get about;
+
+  /// No description provided for @appDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'A cross-platform Flutter app that supports online video and BT torrent playback'**
+  String get appDescription;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @searchingSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching for sources...'**
+  String get searchingSource;
+
+  /// No description provided for @episodesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} episodes'**
+  String episodesCount(int count);
+
+  /// No description provided for @selectEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Episodes'**
+  String get selectEpisodes;
+
+  /// No description provided for @relatedRecommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'Related Recommendations'**
+  String get relatedRecommendations;
+
+  /// Test video title
+  ///
+  /// In en, this message translates to:
+  /// **'Test Video'**
+  String get testVideo;
+
+  /// Big Buck Bunny test video name
+  ///
+  /// In en, this message translates to:
+  /// **'Big Buck Bunny'**
+  String get bigBuckBunny;
+
+  /// Test online video playback description
+  ///
+  /// In en, this message translates to:
+  /// **'Test online video playback'**
+  String get testOnlineVideoPlay;
+
+  /// Test video description
+  ///
+  /// In en, this message translates to:
+  /// **'Playable in China'**
+  String get testVideoDescription;
+
+  /// Search anime
+  ///
+  /// In en, this message translates to:
+  /// **'Search Anime'**
+  String get searchAnime;
+
+  /// Enter keyword to search anime hint
+  ///
+  /// In en, this message translates to:
+  /// **'Enter keyword to search anime'**
+  String get enterKeywordToSearchAnime;
+
+  /// No resources found
+  ///
+  /// In en, this message translates to:
+  /// **'No playback resources found for this anime'**
+  String get noResourceFound;
+
+  /// No description provided for @searchResultCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Found {count} results'**
+  String searchResultCount(int count);
+
+  /// No description provided for @tryGetVideoDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying to get video detail from {source}, ID: {id}'**
+  String tryGetVideoDetail(String source, String id);
+
+  /// No description provided for @videoDetailSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Video detail obtained successfully, {count} episodes'**
+  String videoDetailSuccess(int count);
+
+  /// Failed to get video detail
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to get video detail'**
+  String get getVideoDetailFailed;
+
+  /// No description provided for @searchResultsHaveEpisodes.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results already have {count} episodes'**
+  String searchResultsHaveEpisodes(int count);
+
+  /// No description provided for @episodePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Episode {index}'**
+  String episodePrefix(int index);
+
+  /// No description provided for @jumpToPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Jumping to player, episode: {episodeNumber}'**
+  String jumpToPlayer(int episodeNumber);
+
+  /// Failed to search resources
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to search resources'**
+  String get searchResourceFailed;
+
+  /// Load failed
+  ///
+  /// In en, this message translates to:
+  /// **'Load failed'**
+  String get loadFailed;
+
+  /// Error searching for playback resources
+  ///
+  /// In en, this message translates to:
+  /// **'Error searching for playback resources, please try again'**
+  String get searchResourceError;
 
   /// No description provided for @sunday.
   ///

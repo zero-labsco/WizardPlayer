@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  amis_flutter_utils:
+    git:
+      url: https://gitee.com/AmisKwok/amis_flutter_utils.git
+      ref: main
+
   # GetX 状态管理
   get: ^4.7.3
 

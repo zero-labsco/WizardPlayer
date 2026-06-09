@@ -211,9 +211,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearAllHistory => 'Clear All History';
 
   @override
-  String get searchAnime => 'Search Anime';
-
-  @override
   String getVideoList(String type, int page) {
     return 'Getting $type video list, page $page';
   }
@@ -300,6 +297,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get about => 'About';
+
+  @override
+  String get appDescription =>
+      'A cross-platform Flutter app that supports online video and BT torrent playback';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get searchingSource => 'Searching for sources...';
+
+  @override
+  String episodesCount(int count) {
+    return '$count episodes';
+  }
+
+  @override
+  String get selectEpisodes => 'Episodes';
+
+  @override
+  String get relatedRecommendations => 'Related Recommendations';
+
+  @override
+  String get testVideo => 'Test Video';
+
+  @override
+  String get bigBuckBunny => 'Big Buck Bunny';
+
+  @override
+  String get testOnlineVideoPlay => 'Test online video playback';
+
+  @override
+  String get testVideoDescription => 'Playable in China';
+
+  @override
+  String get searchAnime => 'Search Anime';
+
+  @override
+  String get enterKeywordToSearchAnime => 'Enter keyword to search anime';
+
+  @override
+  String get noResourceFound => 'No playback resources found for this anime';
+
+  @override
+  String searchResultCount(int count) {
+    return 'Found $count results';
+  }
+
+  @override
+  String tryGetVideoDetail(String source, String id) {
+    return 'Trying to get video detail from $source, ID: $id';
+  }
+
+  @override
+  String videoDetailSuccess(int count) {
+    return 'Video detail obtained successfully, $count episodes';
+  }
+
+  @override
+  String get getVideoDetailFailed => 'Failed to get video detail';
+
+  @override
+  String searchResultsHaveEpisodes(int count) {
+    return 'Search results already have $count episodes';
+  }
+
+  @override
+  String episodePrefix(int index) {
+    return 'Episode $index';
+  }
+
+  @override
+  String jumpToPlayer(int episodeNumber) {
+    return 'Jumping to player, episode: $episodeNumber';
+  }
+
+  @override
+  String get searchResourceFailed => 'Failed to search resources';
+
+  @override
+  String get loadFailed => 'Load failed';
+
+  @override
+  String get searchResourceError =>
+      'Error searching for playback resources, please try again';
 
   @override
   String get sunday => 'Sunday';

@@ -6,6 +6,8 @@ import 'package:wizard_player_torrent/wizard_player_torrent.dart';
 import 'package:wizardplayer/presentation/viewmodels/player_viewmodel.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
+import 'package:wizardplayer/core/l10n/app_localizations.dart';
+import 'package:wizardplayer/core/theme/app_colors.dart';
 
 /// 播放器页面
 ///
@@ -49,6 +51,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final screenWidth = mediaQuery.size.width;
     final statusBarHeight = mediaQuery.padding.top;
 
+    // 播放器背景色：使用 AppColors 统一管理
+    final playerBackgroundColor = AppColors.getPlayerBackground(
+      Theme.of(context).brightness,
+    );
+
     // 视频区域内部宽度（减去左右留白 16*2）
     final videoInnerWidth = screenWidth - 32;
     // 视频高度：16:9
@@ -64,7 +71,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // 下方：集数选择器
     // ═════════════════════════════════════════════════════════════
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: playerBackgroundColor,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -100,9 +107,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
           Obx(() {
             if (_viewModel.isLoading) {
               return Container(
-                color: Colors.black54,
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+                color: playerBackgroundColor.withValues(alpha: 0.54),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               );
             }
@@ -114,6 +123,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   Widget _buildEpisodeSelector() {
+    final brightness = Theme.of(context).brightness;
+    final playerBackgroundColor = AppColors.getPlayerBackground(brightness);
+    final l10n = AppLocalizations.of(context)!;
+
     return GetBuilder<PlayerViewModel>(
       id: 'player',
       init: _viewModel,
@@ -122,16 +135,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
         final currentEpisode = _viewModel.currentEpisode;
 
         return Container(
-          color: Colors.black,
+          color: playerBackgroundColor,
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_viewModel.currentVideo?.title ?? ''} - 第 ${currentEpisode?.episodeNumber ?? 1} 集',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: Colors.white),
+                '${_viewModel.currentVideo?.title ?? ''} - ${l10n.episodeNumber(currentEpisode?.episodeNumber ?? 1)}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: brightness == Brightness.dark
+                      ? null
+                      : AppColors.white70,
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -156,7 +171,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         decoration: BoxDecoration(
                           color: isCurrent
                               ? Theme.of(context).colorScheme.primary
-                              : Colors.grey[800],
+                              : (brightness == Brightness.dark
+                                    ? AppColors.grey800
+                                    : AppColors.grey700),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
@@ -164,7 +181,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                             '${episode.episodeNumber}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: isCurrent ? Colors.white : Colors.white70,
+                              color: isCurrent
+                                  ? AppColors.white54
+                                  : (brightness == Brightness.dark
+                                        ? AppColors.white70
+                                        : AppColors.white60),
                             ),
                           ),
                         ),

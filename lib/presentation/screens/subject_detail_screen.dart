@@ -6,6 +6,8 @@ import 'package:wizardplayer/core/services/bangumi_service.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
+import 'package:wizardplayer/core/l10n/app_localizations.dart';
+import 'package:wizardplayer/core/theme/app_colors.dart';
 
 /// 番剧详情页
 class SubjectDetailScreen extends StatefulWidget {
@@ -82,7 +84,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     if (_subject == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('加载失败')),
+        body: Center(child: Text(AppLocalizations.of(context)!.loadError)),
       );
     }
 
@@ -101,6 +103,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   Widget _buildSliverAppBar(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final imageHeight = screenWidth * 0.6;
+    final l10n = AppLocalizations.of(context)!;
 
     return SliverAppBar(
       expandedHeight: imageHeight,
@@ -115,17 +118,14 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             if (_subject.image != null)
               Image.network(_subject.image!, fit: BoxFit.cover)
             else
-              Container(color: Colors.grey.shade300),
+              Container(color: AppColors.grey300),
             // 渐变遮罩
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
-                  ],
+                  colors: [Colors.transparent, AppColors.black70],
                 ),
               ),
             ),
@@ -150,7 +150,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         : Container(
                             width: 100,
                             height: 140,
-                            color: Colors.grey.shade400,
+                            color: AppColors.grey400,
                             child: const Icon(Icons.movie),
                           ),
                   ),
@@ -164,7 +164,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         Text(
                           _subject.displayName,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.darkTextPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -176,8 +176,8 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                           const SizedBox(height: 4),
                           Text(
                             _subject.name,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
+                            style: const TextStyle(
+                              color: AppColors.white70,
                               fontSize: 14,
                             ),
                           ),
@@ -188,14 +188,14 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                             if (_subject.rating != null) ...[
                               const Icon(
                                 Icons.star,
-                                color: Colors.amber,
+                                color: AppColors.warning,
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 _subject.rating!.toStringAsFixed(1),
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.darkTextPrimary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -203,16 +203,16 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                               const SizedBox(width: 16),
                             ],
                             if (_subject.eps != null) ...[
-                              Icon(
+                              const Icon(
                                 Icons.play_circle_outline,
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: AppColors.white70,
                                 size: 16,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${_subject.eps} 集',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
+                                l10n.episodesCount(_subject.eps!),
+                                style: const TextStyle(
+                                  color: AppColors.white70,
                                   fontSize: 14,
                                 ),
                               ),
@@ -256,6 +256,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
   Widget _buildDetailContent(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1024;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: EdgeInsets.all(isDesktop ? 32 : 16),
@@ -264,7 +265,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         children: [
           // 简介
           if (_subject.summary != null && _subject.summary!.isNotEmpty) ...[
-            Text('简介', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              l10n.introduction,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
               _subject.summary!,
@@ -277,7 +281,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
           // 标签
           if (_subject.tags.isNotEmpty) ...[
-            Text('标签', style: Theme.of(context).textTheme.titleLarge),
+            Text(l10n.tags, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -312,10 +316,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   : const Icon(Icons.play_arrow),
               label: Text(
                 _isSearchingSource
-                    ? '正在搜索资源...'
+                    ? l10n.searchingSource
                     : (_history != null
-                          ? '继续观看 第 ${_history!.currentEpisode} 集'
-                          : '开始播放'),
+                          ? l10n.continuePlay(_history!.currentEpisode)
+                          : l10n.startPlay),
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -326,7 +330,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
           // 选集
           if (_subject.eps != null && _subject.eps! > 0) ...[
-            Text('选集', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              l10n.selectEpisodes,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             _buildEpisodeSelector(context),
             const SizedBox(height: 32),
@@ -334,7 +341,10 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
           // 相关推荐
           if (_similarSubjects.isNotEmpty) ...[
-            Text('相关推荐', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              l10n.relatedRecommendations,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             _buildSimilarSection(context),
           ],
@@ -374,7 +384,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                   : Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(8),
               border: isWatched && !isCurrent
-                  ? Border.all(color: Colors.grey.shade300)
+                  ? Border.all(color: AppColors.grey300)
                   : null,
             ),
             child: Center(
@@ -382,7 +392,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                 '$episodeNumber',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isCurrent ? Colors.white : null,
+                  color: isCurrent ? AppColors.darkTextPrimary : null,
                 ),
               ),
             ),
@@ -422,7 +432,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                         : Container(
                             width: 120,
                             height: 160,
-                            color: Colors.grey.shade300,
+                            color: AppColors.grey300,
                             child: const Icon(Icons.movie),
                           ),
                   ),
@@ -447,6 +457,8 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       _isSearchingSource = true;
     });
 
+    final l10n = AppLocalizations.of(context)!;
+
     try {
       final videoRepository = Get.find<VideoRepository>();
 
@@ -460,8 +472,8 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       if (searchResults.isEmpty) {
         if (mounted) {
           Get.snackbar(
-            '未找到资源',
-            '暂时没有找到这个番剧的播放资源',
+            l10n.noResults,
+            l10n.noResourceFound,
             snackPosition: SnackPosition.BOTTOM,
           );
         }
@@ -521,7 +533,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       if (videoInfo.episodes.isEmpty) {
         try {
           AppLogger().d(
-            '尝试从 ${bestMatch.sourceType} 获取视频详情，ID: ${bestMatch.id}',
+            l10n.tryGetVideoDetail(bestMatch.sourceType, bestMatch.id),
           );
           final detail = await videoRepository.getVideoDetailFromSource(
             bestMatch.id,
@@ -529,7 +541,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
           );
           if (detail != null) {
             videoInfo = detail;
-            AppLogger().d('✅ 视频详情获取成功，剧集数: ${videoInfo.episodes.length}');
+            AppLogger().d(l10n.videoDetailSuccess(videoInfo.episodes.length));
             for (int i = 0; i < videoInfo.episodes.length; i++) {
               final ep = videoInfo.episodes[i];
               AppLogger().d(
@@ -538,10 +550,12 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             }
           }
         } catch (e) {
-          AppLogger().w('获取视频详情失败: $e');
+          AppLogger().w(l10n.getVideoDetailFailed);
         }
       } else {
-        AppLogger().d('搜索结果已有 ${videoInfo.episodes.length} 个剧集');
+        AppLogger().d(
+          l10n.searchResultsHaveEpisodes(videoInfo.episodes.length),
+        );
       }
 
       // 确保有剧集列表
@@ -553,7 +567,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
             epsCount,
             (index) => EpisodeInfo(
               id: '${bestMatch.id}_${index + 1}',
-              title: '第${index + 1}集',
+              title: l10n.episodePrefix(index + 1),
               episodeNumber: index + 1,
               sourceType: bestMatch.sourceType,
             ),
@@ -563,17 +577,21 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
       // 跳转播放页
       if (mounted) {
-        AppLogger().d('跳转到播放器，剧集号: $episodeNumber');
+        AppLogger().d(l10n.jumpToPlayer(episodeNumber));
         Get.to(
           () => PlayerScreen(video: videoInfo, startEpisode: episodeNumber),
         );
       }
     } catch (e, stackTrace) {
-      AppLogger().e('搜索资源失败', error: e, stackTrace: stackTrace);
+      AppLogger().e(
+        l10n.searchResourceFailed,
+        error: e,
+        stackTrace: stackTrace,
+      );
       if (mounted) {
         Get.snackbar(
-          '加载失败',
-          '搜索播放资源时出错，请重试',
+          l10n.loadFailed,
+          l10n.searchResourceError,
           snackPosition: SnackPosition.BOTTOM,
         );
       }

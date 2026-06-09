@@ -92,7 +92,6 @@
   "noFavorites": "暂无收藏",
   "clearHistoryConfirm": "确定要清除所有历史记录吗？",
   "clearAllHistory": "清除所有历史",
-  "searchAnime": "搜索番剧",
   "getVideoList": "获取{type}视频列表，第{page}页",
   "@getVideoList": {
     "placeholders": {
@@ -182,6 +181,114 @@
   },
   "switchSourceFailed": "切换播放源失败",
   "about": "关于",
+  "appDescription": "一个支持在线视频和 BT 种子播放的 Flutter 跨平台应用",
+  "ok": "确定",
+  "searchingSource": "正在搜索资源...",
+  "episodesCount": "{count} 集",
+  "@episodesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "selectEpisodes": "选集",
+  "relatedRecommendations": "相关推荐",
+  "testVideo": "测试视频",
+  "@testVideo": {
+    "description": "测试视频标题"
+  },
+  "bigBuckBunny": "Big Buck Bunny",
+  "@bigBuckBunny": {
+    "description": "Big Buck Bunny 测试视频名称"
+  },
+  "testOnlineVideoPlay": "测试在线视频播放",
+  "@testOnlineVideoPlay": {
+    "description": "测试在线视频播放说明"
+  },
+  "testVideoDescription": "国内可播放",
+  "@testVideoDescription": {
+    "description": "测试视频描述"
+  },
+  "searchAnime": "搜索番剧",
+  "@searchAnime": {
+    "description": "搜索番剧"
+  },
+  "enterKeywordToSearchAnime": "输入关键词搜索番剧",
+  "@enterKeywordToSearchAnime": {
+    "description": "输入关键词搜索番剧提示"
+  },
+  "noResourceFound": "暂时没有找到这个番剧的播放资源",
+  "@noResourceFound": {
+    "description": "没有找到播放资源"
+  },
+  "searchResultCount": "搜索到 {count} 个结果",
+  "@searchResultCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tryGetVideoDetail": "尝试从 {source} 获取视频详情，ID: {id}",
+  "@tryGetVideoDetail": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "videoDetailSuccess": "视频详情获取成功，剧集数: {count}",
+  "@videoDetailSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "getVideoDetailFailed": "获取视频详情失败",
+  "@getVideoDetailFailed": {
+    "description": "获取视频详情失败"
+  },
+  "searchResultsHaveEpisodes": "搜索结果已有 {count} 个剧集",
+  "@searchResultsHaveEpisodes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "episodePrefix": "第{index}集",
+  "@episodePrefix": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "jumpToPlayer": "跳转到播放器，剧集号: {episodeNumber}",
+  "@jumpToPlayer": {
+    "placeholders": {
+      "episodeNumber": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResourceFailed": "搜索资源失败",
+  "@searchResourceFailed": {
+    "description": "搜索资源失败"
+  },
+  "loadFailed": "加载失败",
+  "@loadFailed": {
+    "description": "加载失败"
+  },
+  "searchResourceError": "搜索播放资源时出错，请重试",
+  "@searchResourceError": {
+    "description": "搜索播放资源时出错"
+  },
   "sunday": "周日",
   "monday": "周一",
   "tuesday": "周二",
