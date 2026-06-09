@@ -72,6 +72,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Mock 测试框架
+  mockito: ^5.4.4
+
   # 代码规范检查
   flutter_lints: ^3.0.0
 
