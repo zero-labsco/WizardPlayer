@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/subject_detail_screen.dart';
 import 'package:wizardplayer/presentation/screens/search_screen.dart';
@@ -51,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadRanking() async {
     try {
-      final videoRepository = Get.find<VideoRepository>();
+      final videoRepository = DI.get<VideoRepository>();
       final videos = await videoRepository.getRanking();
       if (mounted) {
         setState(() {
@@ -64,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
               viewCount: video.viewCount?.toString(),
               tags: video.tags.take(3).toList(),
               onTap: () =>
-                  Get.to(() => SubjectDetailScreen(subjectId: video.id)),
+                  Nav.to(() => SubjectDetailScreen(subjectId: video.id)),
             );
           }).toList();
           _rankingLoading = false;
@@ -79,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadLatest() async {
     try {
-      final videoRepository = Get.find<VideoRepository>();
+      final videoRepository = DI.get<VideoRepository>();
       final videos = await videoRepository.getLatest();
       if (mounted) {
         setState(() {
@@ -115,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       rating: info.rating,
       viewCount: info.viewCount?.toString(),
       tags: info.tags.take(3).toList(),
-      onTap: () => Get.to(() => SubjectDetailScreen(subjectId: info.id)),
+      onTap: () => Nav.to(() => SubjectDetailScreen(subjectId: info.id)),
     );
   }
 
@@ -178,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.search),
             tooltip: l10n.search,
             onPressed: () {
-              Get.to(() => const SearchScreen());
+              Nav.to(() => const SearchScreen());
             },
           ),
           // 设置按钮
@@ -317,8 +319,8 @@ class _HomeScreenState extends State<HomeScreen> {
   /// 显示设置对话框
   void _showSettingsDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final themeManager = Get.find<ThemeManager>();
-    final languageManager = Get.find<LanguageManager>();
+    final themeManager = DI.get<ThemeManager>();
+    final languageManager = DI.get<LanguageManager>();
 
     showModalBottomSheet(
       context: context,

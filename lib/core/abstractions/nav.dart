@@ -47,14 +47,14 @@ class AppRoute {
 class Nav {
   Nav._();
 
-  /// 导航到指定页面（压栈）
-  static Future<T?> to<T>(String routeName, {dynamic arguments}) {
-    return NavImpl.to<T>(routeName, arguments: arguments);
+  /// 导航到指定页面（压栈）- 支持页面构建器
+  static Future<T?> to<T>(Widget Function() pageBuilder, {dynamic arguments}) {
+    return NavImpl.to<T>(pageBuilder, arguments: arguments);
   }
 
-  /// 替换当前页面（出栈后压栈）
-  static Future<T?> off<T>(String routeName, {dynamic arguments}) {
-    return NavImpl.off<T>(routeName, arguments: arguments);
+  /// 替换当前页面（出栈后压栈）- 支持页面构建器
+  static Future<T?> off<T>(Widget Function() pageBuilder, {dynamic arguments}) {
+    return NavImpl.off<T>(pageBuilder, arguments: arguments);
   }
 
   /// 返回上一页
@@ -65,9 +65,9 @@ class Nav {
   /// 获取当前路由参数
   static dynamic get arguments => NavImpl.arguments;
 
-  /// 替换所有页面（清除栈底）
-  static Future<T?> offAll<T>(String routeName, {dynamic arguments}) {
-    return NavImpl.offAll<T>(routeName, arguments: arguments);
+  /// 替换所有页面（清除栈底）- 支持页面构建器
+  static Future<T?> offAll<T>(Widget Function() pageBuilder, {dynamic arguments}) {
+    return NavImpl.offAll<T>(pageBuilder, arguments: arguments);
   }
 
   /// 返回直到条件满足

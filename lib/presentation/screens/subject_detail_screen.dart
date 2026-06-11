@@ -5,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizardplayer/core/services/bangumi_service.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
@@ -46,7 +48,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
   Future<void> _loadData() async {
     try {
-      final bangumiService = Get.find<BangumiService>();
+      final bangumiService = DI.get<BangumiService>();
 
       // 并行加载数据
       final results = await Future.wait([
@@ -54,7 +56,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         bangumiService.getSimilarSubject(_subjectIdInt, limit: 6),
       ]);
 
-      final historyManager = Get.find<PlayHistoryManager>();
+      final historyManager = DI.get<PlayHistoryManager>();
       final history = historyManager.getHistory(_subjectIdInt);
 
       setState(() {
@@ -489,7 +491,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     try {
-      final videoRepository = Get.find<VideoRepository>();
+      final videoRepository = DI.get<VideoRepository>();
 
       // 获取搜索关键词（优先用中文名，没有则用原名）
       final searchKeyword = _subject.nameCn ?? _subject.name ?? '';
@@ -607,7 +609,7 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       // 跳转播放页
       if (mounted) {
         AppLogger().d(l10n.jumpToPlayer(episodeNumber));
-        Get.to(
+        Nav.to(
           () => PlayerScreen(video: videoInfo, startEpisode: episodeNumber),
         );
       }

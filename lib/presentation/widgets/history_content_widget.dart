@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
 import 'package:wizardplayer/presentation/widgets/common_widgets.dart';
@@ -14,7 +16,7 @@ class HistoryContentWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final historyManager = Get.find<PlayHistoryManager>();
+    final historyManager = DI.get<PlayHistoryManager>();
 
     return Obx(() {
       final histories = historyManager.histories;
@@ -68,13 +70,13 @@ class HistoryContentWidget extends StatelessWidget {
   /// 播放历史记录
   Future<void> _playHistory(BuildContext context, PlayHistory history) async {
     try {
-      final videoRepository = Get.find<VideoRepository>();
+      final videoRepository = DI.get<VideoRepository>();
       final video = await videoRepository.getVideoDetail(
         history.subjectId.toString(),
       );
 
       if (video != null) {
-        Get.to(
+        Nav.to(
           () =>
               PlayerScreen(video: video, startEpisode: history.currentEpisode),
         );

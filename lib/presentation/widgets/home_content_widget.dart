@@ -4,6 +4,8 @@ import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
 import 'package:wizardplayer/core/widgets/video_grid.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/core/theme/app_colors.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
@@ -110,13 +112,13 @@ class _WatchingSection extends StatefulWidget {
 class _WatchingSectionState extends State<_WatchingSection> {
   Future<void> _playHistory(PlayHistory history) async {
     try {
-      final videoRepository = Get.find<VideoRepository>();
+      final videoRepository = DI.get<VideoRepository>();
       final video = await videoRepository.getVideoDetail(
         history.subjectId.toString(),
       );
 
       if (video != null) {
-        Get.to(
+        Nav.to(
           () =>
               PlayerScreen(video: video, startEpisode: history.currentEpisode),
         );
@@ -140,7 +142,7 @@ class _WatchingSectionState extends State<_WatchingSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final historyManager = Get.find<PlayHistoryManager>();
+    final historyManager = DI.get<PlayHistoryManager>();
 
     return Obx(() {
       final watching = historyManager.histories

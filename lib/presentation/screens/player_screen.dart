@@ -4,6 +4,7 @@ import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizard_player_media/wizard_player_media.dart';
 import 'package:wizard_player_torrent/wizard_player_torrent.dart';
 import 'package:wizardplayer/presentation/viewmodels/player_viewmodel.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
@@ -32,9 +33,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void initState() {
     super.initState();
     _viewModel = PlayerViewModel(
-      Get.find<PlayHistoryRepository>(),
-      Get.find<VideoRepository>(),
-      Get.find<WizardPlayerTorrent>(),
+      DI.get<PlayHistoryRepository>(),
+      DI.get<VideoRepository>(),
+      DI.get<WizardPlayerTorrent>(),
     );
     _viewModel.initPlayer(widget.video, widget.startEpisode);
   }

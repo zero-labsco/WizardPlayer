@@ -13,6 +13,7 @@ import 'package:wizardplayer/core/managers/theme_manager.dart';
 import 'package:wizardplayer/core/theme/app_theme.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
 import 'package:wizardplayer/core/services/bangumi_service.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 import 'package:wizardplayer/presentation/screens/home_screen.dart';
@@ -65,13 +66,13 @@ void main() async {
     final bangumiService = BangumiService();
     await bangumiService.init();
 
-    Get.put(themeManager);
-    Get.put(languageManager);
-    Get.put(playHistoryRepository);
-    Get.put(PlayHistoryManager());
-    Get.put(videoRepository);
-    Get.put(wizardPlayerTorrent);
-    Get.put(bangumiService);
+    DI.put(themeManager);
+    DI.put(languageManager);
+    DI.put(playHistoryRepository);
+    DI.put(PlayHistoryManager());
+    DI.put(videoRepository);
+    DI.put(wizardPlayerTorrent);
+    DI.put(bangumiService);
     AppLogger().d('管理器注册完成');
 
     // 等待管理器初始化
@@ -92,8 +93,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeManager = Get.find<ThemeManager>();
-    final languageManager = Get.find<LanguageManager>();
+    final themeManager = DI.get<ThemeManager>();
+    final languageManager = DI.get<LanguageManager>();
 
     return GetBuilder<ThemeManager>(
       init: themeManager,

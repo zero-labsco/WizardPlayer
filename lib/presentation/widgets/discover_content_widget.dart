@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
 import 'package:wizardplayer/core/theme/app_colors.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 import 'package:wizardplayer/presentation/screens/search_screen.dart';
 import 'package:wizardplayer/presentation/screens/player_screen.dart';
@@ -23,7 +25,7 @@ class DiscoverContentWidget extends StatelessWidget {
           // 搜索框
           GestureDetector(
             onTap: () {
-              Get.to(() => const SearchScreen());
+              Nav.to(() => const SearchScreen());
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -72,7 +74,7 @@ class _TestVideoSectionState extends State<_TestVideoSection> {
     // 获取上次播放的集数
     int startEpisode = 1;
     try {
-      final historyRepo = Get.find<PlayHistoryRepository>();
+      final historyRepo = DI.get<PlayHistoryRepository>();
       final history = await historyRepo.getHistoryByVideoId('test_video_001');
       if (history != null) {
         startEpisode = history.episodeNumber;

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
 import 'package:wizardplayer/data/models/play_history_model.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 
@@ -112,7 +113,7 @@ class PlayHistoryManager extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _repository = Get.find<PlayHistoryRepository>();
+    _repository = DI.get<PlayHistoryRepository>();
     _loadHistories();
   }
 

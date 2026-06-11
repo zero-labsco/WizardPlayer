@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/services/bangumi_service.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/abstractions/nav.dart';
 import 'package:wizardplayer/core/widgets/video_grid.dart';
 import 'package:wizardplayer/presentation/screens/subject_detail_screen.dart';
 import 'package:wizardplayer/core/l10n/app_localizations.dart';
@@ -49,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     try {
-      final bangumiService = Get.find<BangumiService>();
+      final bangumiService = DI.get<BangumiService>();
       final result = await bangumiService.searchSubject(keyword);
 
       setState(() {
@@ -63,7 +64,7 @@ class _SearchScreenState extends State<SearchScreen> {
             viewCount: subject.collectionCount?.toString(),
             tags: subject.tags.take(3).toList(),
             onTap: () =>
-                Get.to(() => SubjectDetailScreen(subjectId: subject.id)),
+                Nav.to(() => SubjectDetailScreen(subjectId: subject.id)),
           );
         }).toList();
         _isLoading = false;
