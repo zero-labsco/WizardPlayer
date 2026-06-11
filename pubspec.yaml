@@ -90,6 +90,12 @@ dev_dependencies:
   # JSON序列化代码生成
   json_serializable: ^6.7.1
 
+  # 原生启动页
+  flutter_native_splash: ^2.4.7
+
+  # App 图标生成
+  icons_launcher: ^3.1.0
+
 # Windows 构建：覆盖 libtorrent_flutter 使用本地预编译版本，避免 CMake 下载失败
 dependency_overrides:
   libtorrent_flutter:
@@ -104,3 +110,23 @@ flutter:
   # 国际化资源
   assets:
     - lib/core/l10n/
+    - assets/image/icons/icon.png
+
+# 原生启动页配置
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#f9faf9"
+  image: assets/image/icons/icon.png
+  color_dark: "#434d53"
+  image_dark: assets/image/icons/icon.png
+
+# App 图标配置
+icons_launcher:
+  image_path: "assets/image/icons/icon.png"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
+

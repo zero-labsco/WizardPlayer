@@ -16,6 +16,7 @@ _$PlayHistoryModelImpl _$$PlayHistoryModelImplFromJson(
   episodeNumber: (json['episodeNumber'] as num).toInt(),
   position: (json['position'] as num).toInt(),
   duration: (json['duration'] as num).toInt(),
+  videoUrl: json['videoUrl'] as String?,
   lastWatchTime: DateTime.parse(json['lastWatchTime'] as String),
   watchCount: (json['watchCount'] as num?)?.toInt() ?? 1,
 );
@@ -30,6 +31,7 @@ Map<String, dynamic> _$$PlayHistoryModelImplToJson(
   'episodeNumber': instance.episodeNumber,
   'position': instance.position,
   'duration': instance.duration,
+  'videoUrl': instance.videoUrl,
   'lastWatchTime': instance.lastWatchTime.toIso8601String(),
   'watchCount': instance.watchCount,
 };

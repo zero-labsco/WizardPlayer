@@ -33,6 +33,9 @@ class PlayHistoryModel with _$PlayHistoryModel {
     /// 视频总时长（毫秒）
     required int duration,
 
+    /// 视频URL（用于恢复播放链接）
+    String? videoUrl,
+
     /// 最后观看时间
     required DateTime lastWatchTime,
 
@@ -41,5 +44,5 @@ class PlayHistoryModel with _$PlayHistoryModel {
   }) = _PlayHistoryModel;
 
   factory PlayHistoryModel.fromJson(Map<String, dynamic> json) =>
-      _$PlayHistoryModelFromJson(json);
+      _$$PlayHistoryModelImplFromJson(json);
 }

@@ -19,8 +19,14 @@ import 'package:wizardplayer/core/theme/app_colors.dart';
 class PlayerScreen extends StatefulWidget {
   final VideoInfo video;
   final int? startEpisode;
+  final int? startPosition;
 
-  const PlayerScreen({super.key, required this.video, this.startEpisode});
+  const PlayerScreen({
+    super.key,
+    required this.video,
+    this.startEpisode,
+    this.startPosition,
+  });
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -37,7 +43,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
       DI.get<VideoRepository>(),
       DI.get<WizardPlayerTorrent>(),
     );
-    _viewModel.initPlayer(widget.video, widget.startEpisode);
+    _viewModel.initPlayer(
+      widget.video,
+      widget.startEpisode,
+      startPosition: widget.startPosition,
+    );
   }
 
   @override

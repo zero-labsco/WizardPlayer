@@ -71,16 +71,20 @@ class _TestVideoSectionState extends State<_TestVideoSection> {
   Future<void> _playTestVideo(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
 
-    // 获取上次播放的集数
+    // 获取上次播放的集数和位置
     int startEpisode = 1;
+    int startPosition = 0;
+    String? lastVideoUrl;
     try {
       final historyRepo = DI.get<PlayHistoryRepository>();
       final history = await historyRepo.getHistoryByVideoId('test_video_001');
       if (history != null) {
         startEpisode = history.episodeNumber;
+        startPosition = history.position;
+        lastVideoUrl = history.videoUrl;
       }
     } catch (e) {
-      // 使用默认的第1集
+      // 使用默认值
     }
 
     final testVideo = VideoInfo(
@@ -91,11 +95,54 @@ class _TestVideoSectionState extends State<_TestVideoSection> {
           'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg',
       sourceType: 'test',
       episodes: [
-        const EpisodeInfo(
+        // 第1集 - Sintel 动画
+        EpisodeInfo(
           id: 'test_ep_001',
-          title: '测试视频',
+          title: 'Sintel 动画 (第1集)',
           episodeNumber: 1,
           sourceType: 'test',
+          extra: {'url': 'https://www.w3schools.com/html/mov_bbb.mp4'},
+        ),
+        // 第2集 - Blender Foundation 作品
+        EpisodeInfo(
+          id: 'test_ep_002',
+          title: 'Blender Foundation 作品 (第2集)',
+          episodeNumber: 2,
+          sourceType: 'test',
+          extra: {'url': 'https://vjs.zencdn.net/v/oceans.mp4'},
+        ),
+        // 第3集 - Tears of Steel
+        EpisodeInfo(
+          id: 'test_ep_003',
+          title: 'Tears of Steel (第3集)',
+          episodeNumber: 3,
+          sourceType: 'test',
+          extra: {
+            'url':
+                'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+          },
+        ),
+        // 第4集 - For Bigger Blazes
+        EpisodeInfo(
+          id: 'test_ep_004',
+          title: 'For Bigger Blazes (第4集)',
+          episodeNumber: 4,
+          sourceType: 'test',
+          extra: {
+            'url':
+                'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+          },
+        ),
+        // 第5集 - For Bigger Escapes
+        EpisodeInfo(
+          id: 'test_ep_005',
+          title: 'For Bigger Escapes (第5集)',
+          episodeNumber: 5,
+          sourceType: 'test',
+          extra: {
+            'url':
+                'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+          },
         ),
       ],
       tags: ['测试', '动画'],
@@ -103,7 +150,13 @@ class _TestVideoSectionState extends State<_TestVideoSection> {
       viewCount: 1000000,
     );
 
-    Get.to(() => PlayerScreen(video: testVideo, startEpisode: startEpisode));
+    Get.to(
+      () => PlayerScreen(
+        video: testVideo,
+        startEpisode: startEpisode,
+        startPosition: lastVideoUrl != null ? startPosition : null,
+      ),
+    );
   }
 
   @override

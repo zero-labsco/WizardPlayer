@@ -9,7 +9,8 @@ import 'package:get/get.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizard_player_media/wizard_player_media.dart';
 import 'package:wizard_player_torrent/wizard_player_torrent.dart';
-import 'package:wizardplayer/data/models/play_history_model.dart';
+import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/services/play_history_service.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
 
@@ -79,7 +80,15 @@ class PlayerViewModel extends GetxController {
   }
 
   /// 初始化播放器
-  Future<void> initPlayer(VideoInfo video, int? startEpisode) async {
+  ///
+  /// [video] 视频信息
+  /// [startEpisode] 起始集数
+  /// [startPosition] 起始播放位置（毫秒），优先使用此位置而非历史位置
+  Future<void> initPlayer(
+    VideoInfo video,
+    int? startEpisode, {
+    int? startPosition,
+  }) async {
     _isLoading.value = true;
     try {
       _currentVideo.value = video;
@@ -101,8 +110,12 @@ class PlayerViewModel extends GetxController {
       // 获取可播放的媒体
       await _loadPlayableMedia(episode);
 
-      // 加载历史播放位置
-      await _loadPlayPosition(video.id);
+      // 如果指定了起始位置，直接使用；否则加载历史播放位置
+      if (startPosition != null && startPosition > 0) {
+        await _applyStartPosition(startPosition);
+      } else {
+        await _loadPlayPosition(video.id);
+      }
 
       // 启动位置保存定时器
       _startSavePositionTimer();
@@ -117,6 +130,32 @@ class PlayerViewModel extends GetxController {
     }
   }
 
+  /// 应用起始播放位置
+  Future<void> _applyStartPosition(int positionMs) async {
+    // 等待视频加载完成
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (_player.duration.value <= Duration.zero) {
+      AppLogger().w('Video duration not available, skipping seek');
+      return;
+    }
+
+    final position = Duration(milliseconds: positionMs);
+    final duration = _player.duration.value;
+
+    // 如果距离视频末尾不足 5 秒，视为已看完，从头开始
+    if (duration - position < const Duration(seconds: 5)) {
+      AppLogger().d(
+        'Position near end (${position.inSeconds}s / ${duration.inSeconds}s), starting from beginning',
+      );
+      return;
+    }
+
+    // 确保不超过视频时长
+    final safePosition = position <= duration ? position : Duration.zero;
+    await _player.seekTo(safePosition);
+    AppLogger().d('Applied start position: ${safePosition.inSeconds}s');
+  }
+
   /// 加载可播放的媒体
   Future<void> _loadPlayableMedia(EpisodeInfo episode) async {
     try {
@@ -126,9 +165,17 @@ class PlayerViewModel extends GetxController {
 
       // 检查是否是测试视频
       if (episode.sourceType == 'test') {
-        AppLogger().d('✅ 使用测试视频');
+        // 优先使用 extra 中指定的 URL
+        String videoUrl = 'https://vjs.zencdn.net/v/oceans.mp4';
+        if (episode.extra != null && episode.extra!['url'] != null) {
+          videoUrl = episode.extra!['url'] as String;
+          AppLogger().d('✅ 使用测试视频（自定义 URL）: $videoUrl');
+        } else {
+          AppLogger().d('✅ 使用测试视频（默认 URL）: $videoUrl');
+        }
+
         final media = PlayableMedia(
-          url: 'https://vjs.zencdn.net/v/oceans.mp4',
+          url: videoUrl,
           type: MediaType.mp4,
           quality: '1080p',
           sourceName: 'test',
@@ -299,19 +346,20 @@ class PlayerViewModel extends GetxController {
     try {
       final position = _player.currentPosition.value;
       final duration = _player.duration.value;
+      final video = _currentVideo.value!;
+      final episode = _currentEpisode.value!;
 
-      final history = PlayHistoryModel(
-        id: _currentVideo.value!.id,
-        videoId: _currentVideo.value!.id,
-        videoTitle: _currentVideo.value!.title,
-        coverUrl: _currentVideo.value!.coverUrl ?? '',
-        episodeNumber: _currentEpisode.value!.episodeNumber,
-        position: position.inMilliseconds,
-        duration: duration.inMilliseconds,
-        lastWatchTime: DateTime.now(),
+      // 使用 PlayHistoryManager 更新历史记录（同时更新内存列表和持久化存储）
+      final historyManager = DI.get<PlayHistoryManager>();
+      await historyManager.updateHistory(
+        subjectId: int.tryParse(video.id) ?? 0,
+        subjectName: video.title,
+        coverUrl: video.coverUrl,
+        currentEpisode: episode.episodeNumber,
+        totalEpisodes: video.episodes.length,
+        lastPosition: position.inSeconds,
+        totalDuration: duration.inSeconds,
       );
-
-      await _historyRepository.saveHistory(history);
     } catch (e, stackTrace) {
       AppLogger().e(
         'Failed to save playback position',

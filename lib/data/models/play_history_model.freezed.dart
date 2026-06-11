@@ -42,6 +42,9 @@ mixin _$PlayHistoryModel {
   /// 视频总时长（毫秒）
   int get duration => throw _privateConstructorUsedError;
 
+  /// 视频URL（用于恢复播放链接）
+  String? get videoUrl => throw _privateConstructorUsedError;
+
   /// 最后观看时间
   DateTime get lastWatchTime => throw _privateConstructorUsedError;
 
@@ -73,6 +76,7 @@ abstract class $PlayHistoryModelCopyWith<$Res> {
     int episodeNumber,
     int position,
     int duration,
+    String? videoUrl,
     DateTime lastWatchTime,
     int watchCount,
   });
@@ -100,6 +104,7 @@ class _$PlayHistoryModelCopyWithImpl<$Res, $Val extends PlayHistoryModel>
     Object? episodeNumber = null,
     Object? position = null,
     Object? duration = null,
+    Object? videoUrl = freezed,
     Object? lastWatchTime = null,
     Object? watchCount = null,
   }) {
@@ -133,6 +138,10 @@ class _$PlayHistoryModelCopyWithImpl<$Res, $Val extends PlayHistoryModel>
                 ? _value.duration
                 : duration // ignore: cast_nullable_to_non_nullable
                       as int,
+            videoUrl: freezed == videoUrl
+                ? _value.videoUrl
+                : videoUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
             lastWatchTime: null == lastWatchTime
                 ? _value.lastWatchTime
                 : lastWatchTime // ignore: cast_nullable_to_non_nullable
@@ -164,6 +173,7 @@ abstract class _$$PlayHistoryModelImplCopyWith<$Res>
     int episodeNumber,
     int position,
     int duration,
+    String? videoUrl,
     DateTime lastWatchTime,
     int watchCount,
   });
@@ -190,6 +200,7 @@ class __$$PlayHistoryModelImplCopyWithImpl<$Res>
     Object? episodeNumber = null,
     Object? position = null,
     Object? duration = null,
+    Object? videoUrl = freezed,
     Object? lastWatchTime = null,
     Object? watchCount = null,
   }) {
@@ -223,6 +234,10 @@ class __$$PlayHistoryModelImplCopyWithImpl<$Res>
             ? _value.duration
             : duration // ignore: cast_nullable_to_non_nullable
                   as int,
+        videoUrl: freezed == videoUrl
+            ? _value.videoUrl
+            : videoUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
         lastWatchTime: null == lastWatchTime
             ? _value.lastWatchTime
             : lastWatchTime // ignore: cast_nullable_to_non_nullable
@@ -247,6 +262,7 @@ class _$PlayHistoryModelImpl implements _PlayHistoryModel {
     required this.episodeNumber,
     required this.position,
     required this.duration,
+    this.videoUrl,
     required this.lastWatchTime,
     this.watchCount = 1,
   });
@@ -282,6 +298,10 @@ class _$PlayHistoryModelImpl implements _PlayHistoryModel {
   @override
   final int duration;
 
+  /// 视频URL（用于恢复播放链接）
+  @override
+  final String? videoUrl;
+
   /// 最后观看时间
   @override
   final DateTime lastWatchTime;
@@ -293,7 +313,7 @@ class _$PlayHistoryModelImpl implements _PlayHistoryModel {
 
   @override
   String toString() {
-    return 'PlayHistoryModel(id: $id, videoId: $videoId, videoTitle: $videoTitle, coverUrl: $coverUrl, episodeNumber: $episodeNumber, position: $position, duration: $duration, lastWatchTime: $lastWatchTime, watchCount: $watchCount)';
+    return 'PlayHistoryModel(id: $id, videoId: $videoId, videoTitle: $videoTitle, coverUrl: $coverUrl, episodeNumber: $episodeNumber, position: $position, duration: $duration, videoUrl: $videoUrl, lastWatchTime: $lastWatchTime, watchCount: $watchCount)';
   }
 
   @override
@@ -313,6 +333,8 @@ class _$PlayHistoryModelImpl implements _PlayHistoryModel {
                 other.position == position) &&
             (identical(other.duration, duration) ||
                 other.duration == duration) &&
+            (identical(other.videoUrl, videoUrl) ||
+                other.videoUrl == videoUrl) &&
             (identical(other.lastWatchTime, lastWatchTime) ||
                 other.lastWatchTime == lastWatchTime) &&
             (identical(other.watchCount, watchCount) ||
@@ -330,6 +352,7 @@ class _$PlayHistoryModelImpl implements _PlayHistoryModel {
     episodeNumber,
     position,
     duration,
+    videoUrl,
     lastWatchTime,
     watchCount,
   );
@@ -360,6 +383,7 @@ abstract class _PlayHistoryModel implements PlayHistoryModel {
     required final int episodeNumber,
     required final int position,
     required final int duration,
+    final String? videoUrl,
     required final DateTime lastWatchTime,
     final int watchCount,
   }) = _$PlayHistoryModelImpl;
@@ -394,6 +418,10 @@ abstract class _PlayHistoryModel implements PlayHistoryModel {
   /// 视频总时长（毫秒）
   @override
   int get duration;
+
+  /// 视频URL（用于恢复播放链接）
+  @override
+  String? get videoUrl;
 
   /// 最后观看时间
   @override
