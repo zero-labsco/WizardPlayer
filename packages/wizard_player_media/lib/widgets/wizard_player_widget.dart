@@ -205,9 +205,9 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ─── 视频区域：水平留白 + 16:9比例 + 圆角裁剪 + 手势 ───
+        // ─── 视频区域：上下左右对称留白 + 16:9比例 + 圆角裁剪 + 手势 ───
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: Container(

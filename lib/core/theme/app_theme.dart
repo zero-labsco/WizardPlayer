@@ -4,8 +4,17 @@
 /// @author WizardPlayer
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+/// 获取iOS平台的页面过渡构建器（兼容所有平台）
+PageTransitionsBuilder _getIosPageTransitionBuilder() {
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    return const CupertinoPageTransitionsBuilder();
+  }
+  return const FadeUpwardsPageTransitionsBuilder();
+}
 
 /// 应用主题配置
 class AppTheme {
@@ -150,13 +159,13 @@ class AppTheme {
       dividerTheme: DividerThemeData(color: Colors.grey.shade200, thickness: 1),
 
       // 页面过渡
-      pageTransitionsTheme: const PageTransitionsTheme(
+      pageTransitionsTheme: PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: _getIosPageTransitionBuilder(),
+          TargetPlatform.linux: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: const FadeUpwardsPageTransitionsBuilder(),
         },
       ),
     );
@@ -283,13 +292,13 @@ class AppTheme {
       dividerTheme: DividerThemeData(color: Colors.grey.shade800, thickness: 1),
 
       // 页面过渡
-      pageTransitionsTheme: const PageTransitionsTheme(
+      pageTransitionsTheme: PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: _getIosPageTransitionBuilder(),
+          TargetPlatform.linux: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: const FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: const FadeUpwardsPageTransitionsBuilder(),
         },
       ),
     );

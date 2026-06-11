@@ -174,9 +174,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         onKeyEvent: _handleKeyEvent,
         child: Column(
           children: [
-            // 顶部栏：返回按钮
+            // 顶部栏：返回按钮（桌面端固定高度 48px，确保可见）
             Container(
-              height: statusBarHeight,
+              height: 48,
               color: playerBackgroundColor,
               child: Row(
                 children: [
@@ -202,14 +202,44 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         Expanded(
                           child: Container(
                             color: Colors.black,
-                            child: Center(
-                              child: WizardPlayerWidget(
-                                player: _viewModel.player,
-                                onFullscreen: _toggleFullScreen,
-                                isFullscreen: () => false,
-                                showControls: false, // 禁用内置控件，使用外部控制栏
-                                showProgressBar: false,
-                              ),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                WizardPlayerWidget(
+                                  player: _viewModel.player,
+                                  onFullscreen: _toggleFullScreen,
+                                  isFullscreen: () => false,
+                                  showControls: false,
+                                  showProgressBar: false,
+                                ),
+                                // 暂停时显示半透明播放按钮
+                                Obx(() {
+                                  final isPlaying =
+                                      _viewModel.player.playbackState.value ==
+                                          PlaybackState.playing;
+                                  if (!isPlaying) {
+                                    return Center(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius:
+                                              BorderRadius.circular(60),
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(
+                                            Icons.play_arrow,
+                                            color: Colors.white,
+                                          ),
+                                          iconSize: 60,
+                                          onPressed: () =>
+                                              _viewModel.player.resume(),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }),
+                              ],
                             ),
                           ),
                         ),
