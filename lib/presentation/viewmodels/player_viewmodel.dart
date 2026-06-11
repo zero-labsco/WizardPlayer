@@ -43,6 +43,9 @@ class PlayerViewModel extends GetxController {
   /// 是否正在加载
   final RxBool _isLoading = false.obs;
 
+  /// 从历史缓存的视频 URL（用于快速恢复播放）
+  String? _cachedVideoUrl;
+
   /// 播放位置保存定时器
   Timer? _savePositionTimer;
 
@@ -107,7 +110,10 @@ class PlayerViewModel extends GetxController {
       );
       _currentEpisode.value = episode;
 
-      // 获取可播放的媒体
+      // 先加载历史缓存的 URL（如果存在），用于快速恢复播放
+      await _preloadCachedUrl(video.id);
+
+      // 获取可播放的媒体（优先使用缓存的 URL）
       await _loadPlayableMedia(episode);
 
       // 如果指定了起始位置，直接使用；否则加载历史播放位置
@@ -127,6 +133,21 @@ class PlayerViewModel extends GetxController {
       );
     } finally {
       _isLoading.value = false;
+    }
+  }
+
+  /// 预加载历史缓存的 URL
+  Future<void> _preloadCachedUrl(String videoId) async {
+    try {
+      final history = await _historyRepository.getHistoryByVideoId(videoId);
+      if (history != null &&
+          history.videoUrl != null &&
+          history.videoUrl!.isNotEmpty) {
+        _cachedVideoUrl = history.videoUrl;
+        AppLogger().d('预加载了历史 URL: $_cachedVideoUrl');
+      }
+    } catch (e) {
+      // 忽略错误，不影响播放
     }
   }
 
@@ -207,9 +228,25 @@ class PlayerViewModel extends GetxController {
         return;
       }
 
-      AppLogger().d('⚠️ episode extra 没有 magnet，从数据源获取');
+      AppLogger().d('⚠️ episode extra 没有 magnet，检查缓存或从数据源获取');
 
-      // 否则从数据源获取
+      // 优先使用缓存的 URL（用于快速恢复播放）
+      if (_cachedVideoUrl != null && _cachedVideoUrl!.isNotEmpty) {
+        AppLogger().d('✅ 使用缓存的 URL: $_cachedVideoUrl');
+        final media = PlayableMedia(
+          url: _cachedVideoUrl!,
+          type: MediaType.mp4,
+          quality: 'cached',
+          sourceName: 'cache',
+          episode: episode,
+        );
+        _currentMedia.value = media;
+        await _initializeVideoPlayer(media);
+        return;
+      }
+
+      // 没有缓存，从数据源获取
+      AppLogger().d('⚠️ 没有缓存 URL，从数据源获取');
       final media = await _videoRepository.getPlayableMedia(episode.id);
       _currentMedia.value = media;
 
@@ -296,7 +333,15 @@ class PlayerViewModel extends GetxController {
   Future<void> _loadPlayPosition(String videoId) async {
     try {
       final history = await _historyRepository.getHistoryByVideoId(videoId);
-      if (history != null && _player.duration.value > Duration.zero) {
+      if (history != null) {
+        // 缓存视频 URL，用于快速恢复播放
+        if (history.videoUrl != null && history.videoUrl!.isNotEmpty) {
+          _cachedVideoUrl = history.videoUrl;
+          AppLogger().d('缓存了历史 URL: $_cachedVideoUrl');
+        }
+
+        if (_player.duration.value <= Duration.zero) return;
+
         // 如果上次观看的是同一集，则恢复播放位置
         if (history.episodeNumber == _currentEpisode.value?.episodeNumber) {
           final position = Duration(milliseconds: history.position);
