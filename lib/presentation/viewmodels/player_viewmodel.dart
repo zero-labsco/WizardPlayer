@@ -10,6 +10,7 @@ import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizard_player_media/wizard_player_media.dart';
 import 'package:wizard_player_torrent/wizard_player_torrent.dart';
 import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/implementations/state_provider_impl.dart';
 import 'package:wizardplayer/core/services/play_history_service.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 import 'package:wizardplayer/data/repositories/video_repository.dart';
@@ -26,22 +27,22 @@ class PlayerViewModel extends GetxController {
   final WizardPlayerTorrent? _wizardPlayerTorrent;
 
   /// 当前视频
-  final Rx<VideoInfo?> _currentVideo = Rx(null);
+  final StateProviderImpl<VideoInfo?> _currentVideo;
 
   /// 当前剧集
-  final Rx<EpisodeInfo?> _currentEpisode = Rx(null);
+  final StateProviderImpl<EpisodeInfo?> _currentEpisode;
 
   /// 当前可播放的媒体信息
-  final Rx<PlayableMedia?> _currentMedia = Rx(null);
+  final StateProviderImpl<PlayableMedia?> _currentMedia;
 
   /// 当前种子信息（如果是 BT 源）
-  final Rx<int?> _currentTorrentId = Rx(null);
+  final StateProviderImpl<int?> _currentTorrentId;
 
   /// 播放器
   late final WizardPlayer _player;
 
   /// 是否正在加载
-  final RxBool _isLoading = false.obs;
+  final StateProviderImpl<bool> _isLoading;
 
   /// 从历史缓存的视频 URL（用于快速恢复播放）
   String? _cachedVideoUrl;
@@ -52,8 +53,18 @@ class PlayerViewModel extends GetxController {
   /// 播放状态监听器
   Worker? _playbackStateListener;
 
-  /// 获取播放器
-  WizardPlayer get player => _player;
+  /// 构造函数
+  PlayerViewModel(
+    this._historyRepository,
+    this._videoRepository,
+    this._wizardPlayerTorrent,
+  ) : _currentVideo = StateProviderImpl<VideoInfo?>(null),
+      _currentEpisode = StateProviderImpl<EpisodeInfo?>(null),
+      _currentMedia = StateProviderImpl<PlayableMedia?>(null),
+      _currentTorrentId = StateProviderImpl<int?>(null),
+      _isLoading = StateProviderImpl<bool>(false) {
+    _player = MediaKitWizard();
+  }
 
   /// 获取当前视频
   VideoInfo? get currentVideo => _currentVideo.value;
@@ -64,17 +75,11 @@ class PlayerViewModel extends GetxController {
   /// 获取当前可播放的媒体信息
   PlayableMedia? get currentMedia => _currentMedia.value;
 
+  /// 获取播放器
+  WizardPlayer get player => _player;
+
   /// 获取是否正在加载
   bool get isLoading => _isLoading.value;
-
-  /// 构造函数
-  PlayerViewModel(
-    this._historyRepository,
-    this._videoRepository,
-    this._wizardPlayerTorrent,
-  ) {
-    _player = MediaKitWizard();
-  }
 
   @override
   void onClose() {

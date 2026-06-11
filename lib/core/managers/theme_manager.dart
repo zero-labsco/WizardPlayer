@@ -8,6 +8,7 @@ library;
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wizardplayer/core/implementations/state_provider_impl.dart';
 
 /// 主题管理器
 class ThemeManager extends GetxController {
@@ -15,7 +16,10 @@ class ThemeManager extends GetxController {
   static const String _keyTheme = 'app_theme';
 
   /// 当前主题模式
-  final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
+  final StateProviderImpl<ThemeMode> themeMode;
+
+  /// 构造函数
+  ThemeManager() : themeMode = StateProviderImpl<ThemeMode>(ThemeMode.system);
 
   @override
   void onInit() {

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/abstractions/di.dart';
+import 'package:wizardplayer/core/implementations/state_list_provider_impl.dart';
 import 'package:wizardplayer/data/models/play_history_model.dart';
 import 'package:wizardplayer/data/repositories/play_history_repository.dart';
 
@@ -102,7 +103,8 @@ class PlayHistory {
 /// 播放历史管理器
 class PlayHistoryManager extends GetxController {
   /// 历史记录列表
-  final RxList<PlayHistory> histories = <PlayHistory>[].obs;
+  final StateListProviderImpl<PlayHistory> histories =
+      StateListProviderImpl<PlayHistory>();
 
   /// 最大保存记录数
   static const int _maxHistories = 100;

@@ -8,6 +8,7 @@ library;
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:wizardplayer/core/implementations/state_provider_impl.dart';
 import 'package:wizardplayer/enum/language.dart';
 
 /// 语言管理器
@@ -16,10 +17,13 @@ class LanguageManager extends GetxController {
   static const String _keyLanguage = 'app_language';
 
   /// 当前语言
-  final Rx<AppLanguage> language = AppLanguage.english.obs;
+  final StateProviderImpl<AppLanguage> language;
 
   /// 获取当前语言的 Locale
   Locale get locale => Locale(language.value.code);
+
+  /// 构造函数
+  LanguageManager() : language = StateProviderImpl<AppLanguage>(AppLanguage.english);
 
   @override
   void onInit() {

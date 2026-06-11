@@ -1,6 +1,7 @@
 /// 状态提供者实现
 ///
 /// 基于 GetX 实现状态提供者接口
+/// 继承 Rx<T> 以支持 GetX 的 Obx 监听
 ///
 /// @author AmisKwok
 library;
@@ -10,38 +11,34 @@ import 'package:get/get.dart';
 import 'package:wizardplayer/core/abstractions/state_provider.dart';
 
 /// GetX 状态提供者实现
-/// 封装 GetX 的可观察对象（Rx）
-class StateProviderImpl<T> implements StateProvider<T> {
-  /// GetX 可观察对象
-  final Rx<T> _rx;
+/// 继承 Rx<T> 以支持 Obx 监听
+class StateProviderImpl<T> extends Rx<T> implements StateProvider<T> {
+  StreamController<T>? _controller;
 
-  /// 订阅对象，用于取消监听
-  StreamSubscription<T>? _subscription;
-
-  StateProviderImpl(T initialValue) : _rx = initialValue.obs;
+  StateProviderImpl(super.initialValue);
 
   @override
-  T get value => _rx.value;
+  set value(T newValue) => super.value = newValue;
 
   @override
-  set value(T newValue) => _rx.value = newValue;
-
-  @override
-  Stream<T> get stream => _rx.stream;
+  Stream<T> get stream {
+    // 转发到内部的 stream
+    return super.stream;
+  }
 
   @override
   void update(void Function(T) callback) {
-    final currentValue = _rx.value;
+    final currentValue = super.value;
     callback(currentValue);
-    final newValue = _rx.value;
+    final newValue = super.value;
     if (currentValue != newValue) {
-      _rx.value = newValue;
+      super.value = newValue;
     }
   }
 
   @override
   void cancel() {
-    _subscription?.cancel();
-    _subscription = null;
+    _controller?.close();
+    _controller = null;
   }
 }
