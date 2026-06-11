@@ -151,9 +151,13 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
           _player.resume();
         }
       },
-      onHorizontalDragStart: _onHorizontalDragStart,
-      onHorizontalDragUpdate: _onHorizontalDragUpdate,
-      onHorizontalDragEnd: _onHorizontalDragEnd,
+      onHorizontalDragStart: widget.showControls
+          ? _onHorizontalDragStart
+          : null,
+      onHorizontalDragUpdate: widget.showControls
+          ? _onHorizontalDragUpdate
+          : null,
+      onHorizontalDragEnd: widget.showControls ? _onHorizontalDragEnd : null,
       child: SizedBox.expand(
         child: Stack(
           fit: StackFit.expand,
@@ -184,7 +188,8 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
               return const SizedBox.shrink();
             }),
             // 快进提示
-            if (_isHorizontalDragging) _buildSeekIndicator(),
+            if (widget.showControls && _isHorizontalDragging)
+              _buildSeekIndicator(),
             // 控制栏 overlay
             if (widget.showControls) _buildFullscreenControlsOverlay(),
           ],
@@ -212,7 +217,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
               ),
               clipBehavior: Clip.antiAlias,
               child: GestureDetector(
-                onTap: _toggleControls,
+                onTap: widget.showControls ? _toggleControls : null,
                 onDoubleTap: () {
                   if (_player.playbackState.value == PlaybackState.playing) {
                     _player.pause();
@@ -220,9 +225,15 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
                     _player.resume();
                   }
                 },
-                onHorizontalDragStart: _onHorizontalDragStart,
-                onHorizontalDragUpdate: _onHorizontalDragUpdate,
-                onHorizontalDragEnd: _onHorizontalDragEnd,
+                onHorizontalDragStart: widget.showControls
+                    ? _onHorizontalDragStart
+                    : null,
+                onHorizontalDragUpdate: widget.showControls
+                    ? _onHorizontalDragUpdate
+                    : null,
+                onHorizontalDragEnd: widget.showControls
+                    ? _onHorizontalDragEnd
+                    : null,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -245,9 +256,10 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
                       return const SizedBox.shrink();
                     }),
                     // 快进提示
-                    if (_isHorizontalDragging) _buildSeekIndicator(),
+                    if (widget.showControls && _isHorizontalDragging)
+                      _buildSeekIndicator(),
                     // 返回按钮：视频区域左上角
-                    if (_controlsVisible)
+                    if (widget.showControls && _controlsVisible)
                       Positioned(
                         top: 6,
                         left: 6,
@@ -278,7 +290,7 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
             ),
           ),
         // ─── 控件行2：播放/暂停、音量、倍速、时间、全屏按钮 ───
-        if (_controlsVisible)
+        if (widget.showControls && _controlsVisible)
           SizedBox(
             height: 48,
             child: Padding(

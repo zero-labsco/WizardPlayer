@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:wizard_player_datasource/wizard_player_datasource.dart';
 import 'package:wizard_player_media/wizard_player_media.dart';
@@ -16,6 +17,7 @@ import 'package:wizardplayer/core/theme/app_colors.dart';
 /// 2. 全屏模式：push 独立的 FullscreenPlayerRoute，传入同一个 player
 /// 3. Player（controller）实例在整个生命周期中保持不变
 /// 4. VideoPlayer Widget 在不同 Route 中是不同实例，但绑定同一个 controller
+/// 5. 桌面端：支持键盘快捷键、桌面控制栏、右侧选集面板
 class PlayerScreen extends StatefulWidget {
   final VideoInfo video;
   final int? startEpisode;
@@ -34,6 +36,7 @@ class PlayerScreen extends StatefulWidget {
 
 class _PlayerScreenState extends State<PlayerScreen> {
   late final PlayerViewModel _viewModel;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -52,8 +55,71 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _viewModel.onClose();
     super.dispose();
+  }
+
+  /// 处理键盘事件
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    final player = _viewModel.player;
+    final isPlaying = player.playbackState.value == PlaybackState.playing;
+
+    // 空格键：播放/暂停
+    if (event.logicalKey == LogicalKeyboardKey.space) {
+      if (isPlaying) {
+        player.pause();
+      } else {
+        player.resume();
+      }
+      return KeyEventResult.handled;
+    }
+
+    // 左方向键：快退 10 秒
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      final newPosition =
+          player.currentPosition.value - const Duration(seconds: 10);
+      player.seekTo(newPosition.isNegative ? Duration.zero : newPosition);
+      return KeyEventResult.handled;
+    }
+
+    // 右方向键：快进 10 秒
+    if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      final newPosition =
+          player.currentPosition.value + const Duration(seconds: 10);
+      final maxPosition = player.duration.value;
+      player.seekTo(newPosition > maxPosition ? maxPosition : newPosition);
+      return KeyEventResult.handled;
+    }
+
+    // 上方向键：增加音量
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      final newVolume = (player.volume.value + 0.1).clamp(0.0, 1.0);
+      player.setVolume(newVolume);
+      return KeyEventResult.handled;
+    }
+
+    // 下方向键：减少音量
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      final newVolume = (player.volume.value - 0.1).clamp(0.0, 1.0);
+      player.setVolume(newVolume);
+      return KeyEventResult.handled;
+    }
+
+    // F 键：切换全屏
+    if (event.logicalKey == LogicalKeyboardKey.keyF) {
+      _toggleFullScreen();
+      return KeyEventResult.handled;
+    }
+
+    // Esc 键：退出全屏（由全屏路由处理）
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      return KeyEventResult.ignored;
+    }
+
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -67,6 +133,323 @@ class _PlayerScreenState extends State<PlayerScreen> {
       Theme.of(context).brightness,
     );
 
+    // 判断是否为桌面端（宽度 >= 800 视为桌面端）
+    final isDesktop = screenWidth >= 800;
+
+    if (isDesktop) {
+      return _buildDesktopLayout(
+        context,
+        screenWidth,
+        statusBarHeight,
+        playerBackgroundColor,
+      );
+    } else {
+      return _buildMobileLayout(
+        context,
+        screenWidth,
+        statusBarHeight,
+        playerBackgroundColor,
+      );
+    }
+  }
+
+  /// 构建桌面端布局：左侧视频+控制栏，右侧选集面板
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    double screenWidth,
+    double statusBarHeight,
+    Color playerBackgroundColor,
+  ) {
+    // 右侧选集面板宽度：响应式计算（最小200，最大320，占屏幕25%）
+    final sidePanelWidth = (screenWidth * 0.25).clamp(200.0, 320.0);
+
+    // 控制栏高度
+    const controlsHeight = 48.0;
+
+    return Scaffold(
+      backgroundColor: playerBackgroundColor,
+      body: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: Column(
+          children: [
+            // 顶部栏：返回按钮
+            Container(
+              height: statusBarHeight,
+              color: playerBackgroundColor,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: '返回',
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+
+            // 主内容区：视频 + 控制栏 + 选集面板
+            Expanded(
+              child: Row(
+                children: [
+                  // 左侧：视频区域 + 控制栏
+                  Expanded(
+                    child: Column(
+                      children: [
+                        // 视频播放器（禁用内置控件）
+                        Expanded(
+                          child: Container(
+                            color: Colors.black,
+                            child: Center(
+                              child: WizardPlayerWidget(
+                                player: _viewModel.player,
+                                onFullscreen: _toggleFullScreen,
+                                isFullscreen: () => false,
+                                showControls: false, // 禁用内置控件，使用外部控制栏
+                                showProgressBar: false,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // 桌面端控制栏
+                        Container(
+                          height: controlsHeight,
+                          color: playerBackgroundColor,
+                          child: _buildDesktopControls(
+                            context,
+                            playerBackgroundColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 右侧：选集面板
+                  SizedBox(
+                    width: sidePanelWidth,
+                    child: _buildEpisodeSelector(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建桌面端控制栏
+  Widget _buildDesktopControls(BuildContext context, Color backgroundColor) {
+    final player = _viewModel.player;
+
+    return Container(
+      color: backgroundColor.withValues(alpha: 0.85),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          // 播放/暂停按钮
+          Obx(() {
+            final isPlaying =
+                player.playbackState.value == PlaybackState.playing;
+            return IconButton(
+              icon: Icon(
+                isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 28,
+              ),
+              onPressed: () {
+                if (isPlaying) {
+                  player.pause();
+                } else {
+                  player.resume();
+                }
+              },
+              tooltip: isPlaying ? '暂停' : '播放',
+            );
+          }),
+
+          // 上一集
+          Obx(
+            () => IconButton(
+              icon: Icon(
+                Icons.skip_previous,
+                color: _viewModel.hasPreviousEpisode
+                    ? Colors.white
+                    : Colors.white38,
+                size: 24,
+              ),
+              onPressed: _viewModel.hasPreviousEpisode
+                  ? _viewModel.previousEpisode
+                  : null,
+              tooltip: '上一集',
+            ),
+          ),
+
+          // 下一集
+          Obx(
+            () => IconButton(
+              icon: Icon(
+                Icons.skip_next,
+                color: _viewModel.hasNextEpisode
+                    ? Colors.white
+                    : Colors.white38,
+                size: 24,
+              ),
+              onPressed: _viewModel.hasNextEpisode
+                  ? _viewModel.nextEpisode
+                  : null,
+              tooltip: '下一集',
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 当前时间
+          Obx(() {
+            final position = player.currentPosition.value;
+            return Text(
+              _formatDuration(position),
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            );
+          }),
+
+          const SizedBox(width: 8),
+
+          // 进度条
+          Expanded(
+            child: Obx(() {
+              final position = player.currentPosition.value;
+              final duration = player.duration.value;
+              final progress = duration.inMilliseconds > 0
+                  ? position.inMilliseconds / duration.inMilliseconds
+                  : 0.0;
+
+              return SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 4,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 6,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 12,
+                  ),
+                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                  inactiveTrackColor: Colors.white30,
+                  thumbColor: Theme.of(context).colorScheme.primary,
+                ),
+                child: Slider(
+                  value: progress.clamp(0.0, 1.0),
+                  onChanged: (value) {
+                    final newPosition = Duration(
+                      milliseconds: (value * duration.inMilliseconds).round(),
+                    );
+                    player.seekTo(newPosition);
+                  },
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 总时长
+          Obx(() {
+            final duration = player.duration.value;
+            return Text(
+              _formatDuration(duration),
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            );
+          }),
+
+          const SizedBox(width: 16),
+
+          // 音量控制
+          Obx(() {
+            final volume = player.volume.value;
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  volume == 0
+                      ? Icons.volume_off
+                      : (volume < 0.5 ? Icons.volume_down : Icons.volume_up),
+                  color: Colors.white70,
+                  size: 20,
+                ),
+                SizedBox(
+                  width: 80,
+                  child: SliderTheme(
+                    data: const SliderThemeData(
+                      trackHeight: 3,
+                      thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5),
+                      overlayShape: RoundSliderOverlayShape(overlayRadius: 10),
+                      activeTrackColor: Colors.white70,
+                      inactiveTrackColor: Colors.white30,
+                      thumbColor: Colors.white,
+                    ),
+                    child: Slider(
+                      value: volume,
+                      onChanged: (value) => player.setVolume(value),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+
+          const SizedBox(width: 8),
+
+          // 播放速度控制
+          Obx(() {
+            final speed = player.playbackSpeed.value;
+            return PopupMenuButton<double>(
+              initialValue: speed,
+              onSelected: (value) => player.setPlaybackSpeed(value),
+              tooltip: '播放速度',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white30),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${speed}x',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ),
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 0.5, child: Text('0.5x')),
+                const PopupMenuItem(value: 0.75, child: Text('0.75x')),
+                const PopupMenuItem(value: 1.0, child: Text('1.0x')),
+                const PopupMenuItem(value: 1.25, child: Text('1.25x')),
+                const PopupMenuItem(value: 1.5, child: Text('1.5x')),
+                const PopupMenuItem(value: 2.0, child: Text('2.0x')),
+              ],
+            );
+          }),
+
+          const SizedBox(width: 8),
+
+          // 全屏按钮
+          IconButton(
+            icon: const Icon(Icons.fullscreen, color: Colors.white, size: 24),
+            onPressed: _toggleFullScreen,
+            tooltip: '全屏 (F)',
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建移动端布局：视频在上，选集在下
+  Widget _buildMobileLayout(
+    BuildContext context,
+    double screenWidth,
+    double statusBarHeight,
+    Color playerBackgroundColor,
+  ) {
     // 视频区域内部宽度（减去左右留白 16*2）
     final videoInnerWidth = screenWidth - 32;
     // 视频高度：16:9
@@ -76,11 +459,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // 播放器总高度 = 视频高度 + 控件区域
     final playerHeight = videoHeight + controlsHeight;
 
-    // ═════════════════════════════════════════════════════════════
-    // 布局：
-    // 顶部：视频区域(16:9，有留白) + 进度条行 + 按钮行（从状态栏下方开始）
-    // 下方：集数选择器
-    // ═════════════════════════════════════════════════════════════
     return Scaffold(
       backgroundColor: playerBackgroundColor,
       body: Stack(
@@ -210,6 +588,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
         );
       },
     );
+  }
+
+  /// 格式化时长
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    }
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   /// 切换全屏

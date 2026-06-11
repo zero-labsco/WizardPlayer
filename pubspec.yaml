@@ -129,4 +129,10 @@ icons_launcher:
       enable: true
     ios:
       enable: true
+    windows:
+      enable: true
+    linux:
+      enable: true
+    macos:
+      enable: true
 
