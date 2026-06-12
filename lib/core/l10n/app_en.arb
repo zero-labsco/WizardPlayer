@@ -295,5 +295,31 @@
   "wednesday": "Wednesday",
   "thursday": "Thursday",
   "friday": "Friday",
-  "saturday": "Saturday"
+  "saturday": "Saturday",
+  "paused": "Paused",
+  "playing": "Playing",
+  "seekBackward": "-10s",
+  "seekForward": "+10s",
+  "volumePercent": "Volume {percent}%",
+  "@volumePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "windowFullscreen": "Window Fullscreen",
+  "exitWindowFullscreen": "Exit Window Fullscreen",
+  "screenFullscreen": "Screen Fullscreen (Esc to exit)",
+  "exitScreenFullscreen": "Exit Screen Fullscreen",
+  "keyboardShortcuts": "Keyboard Shortcuts",
+  "spacePlayPause": "Space: Play/Pause",
+  "arrowKeysSeek": "Arrow Keys: Seek/Volume",
+  "keyWWindowFullscreen": "W: Window Fullscreen",
+  "keyFScreenFullscreen": "F: Screen Fullscreen",
+  "keyEscExitFullscreen": "Esc: Exit Fullscreen",
+  "back": "Back",
+  "playbackSpeed": "Playback Speed",
+  "loadHistoryFailed": "Failed to load history",
+  "loadedPlayHistory": "Loaded {count} play history records"
 }

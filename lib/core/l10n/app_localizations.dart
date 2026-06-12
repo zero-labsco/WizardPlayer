@@ -799,6 +799,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saturday'**
   String get saturday;
+
+  /// No description provided for @paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get paused;
+
+  /// No description provided for @playing.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing'**
+  String get playing;
+
+  /// No description provided for @seekBackward.
+  ///
+  /// In en, this message translates to:
+  /// **'-10s'**
+  String get seekBackward;
+
+  /// No description provided for @seekForward.
+  ///
+  /// In en, this message translates to:
+  /// **'+10s'**
+  String get seekForward;
+
+  /// No description provided for @volumePercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume {percent}%'**
+  String volumePercent(int percent);
+
+  /// No description provided for @windowFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Window Fullscreen'**
+  String get windowFullscreen;
+
+  /// No description provided for @exitWindowFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Window Fullscreen'**
+  String get exitWindowFullscreen;
+
+  /// No description provided for @screenFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen Fullscreen (Esc to exit)'**
+  String get screenFullscreen;
+
+  /// No description provided for @exitScreenFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Screen Fullscreen'**
+  String get exitScreenFullscreen;
+
+  /// No description provided for @keyboardShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard Shortcuts'**
+  String get keyboardShortcuts;
+
+  /// No description provided for @spacePlayPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Space: Play/Pause'**
+  String get spacePlayPause;
+
+  /// No description provided for @arrowKeysSeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrow Keys: Seek/Volume'**
+  String get arrowKeysSeek;
+
+  /// No description provided for @keyWWindowFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'W: Window Fullscreen'**
+  String get keyWWindowFullscreen;
+
+  /// No description provided for @keyFScreenFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'F: Screen Fullscreen'**
+  String get keyFScreenFullscreen;
+
+  /// No description provided for @keyEscExitFullscreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Esc: Exit Fullscreen'**
+  String get keyEscExitFullscreen;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @playbackSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback Speed'**
+  String get playbackSpeed;
+
+  /// No description provided for @loadHistoryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load history'**
+  String get loadHistoryFailed;
+
+  /// No description provided for @loadedPlayHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Loaded {count} play history records'**
+  String loadedPlayHistory(Object count);
 }
 
 class _AppLocalizationsDelegate

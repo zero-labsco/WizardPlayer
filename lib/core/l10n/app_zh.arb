@@ -295,5 +295,31 @@
   "wednesday": "周三",
   "thursday": "周四",
   "friday": "周五",
-  "saturday": "周六"
+  "saturday": "周六",
+  "paused": "已暂停",
+  "playing": "播放中",
+  "seekBackward": "-10秒",
+  "seekForward": "+10秒",
+  "volumePercent": "音量 {percent}%",
+  "@volumePercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "windowFullscreen": "窗口全屏",
+  "exitWindowFullscreen": "退出窗口全屏",
+  "screenFullscreen": "屏幕全屏 (按Esc退出)",
+  "exitScreenFullscreen": "退出屏幕全屏",
+  "keyboardShortcuts": "键盘快捷键",
+  "spacePlayPause": "空格: 播放/暂停",
+  "arrowKeysSeek": "方向键: 快进快退/音量",
+  "keyWWindowFullscreen": "W: 窗口全屏",
+  "keyFScreenFullscreen": "F: 屏幕全屏",
+  "keyEscExitFullscreen": "Esc: 退出全屏",
+  "back": "返回",
+  "playbackSpeed": "播放速度",
+  "loadHistoryFailed": "加载历史记录失败",
+  "loadedPlayHistory": "加载播放历史: {count} 条"
 }

@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:amis_flutter_utils/utils.dart';
 import 'package:wizardplayer/core/bootstrap/app_bootstrapper.dart';
 import 'package:wizardplayer/core/config/app_config.dart';
+import 'package:window_manager/window_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +12,14 @@ void main() async {
   // 初始化日志（保留在 main 中）
   AppLogger().initialize();
   AppLogger().d('应用开始初始化...');
+
+  // 桌面端初始化窗口管理器（用于屏幕全屏）
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
+    await windowManager.ensureInitialized();
+  }
 
   // 移动端只允许竖屏
   await SystemChrome.setPreferredOrientations([

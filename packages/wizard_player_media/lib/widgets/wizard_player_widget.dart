@@ -23,6 +23,7 @@ class WizardPlayerWidget extends StatefulWidget {
   final VoidCallback? onFullscreen;
   final bool Function()? isFullscreen;
   final bool showProgressBar;
+  final bool showAlwaysControls;
 
   const WizardPlayerWidget({
     super.key,
@@ -33,6 +34,7 @@ class WizardPlayerWidget extends StatefulWidget {
     this.onFullscreen,
     this.isFullscreen,
     this.showProgressBar = true,
+    this.showAlwaysControls = false,
   });
 
   @override
@@ -54,6 +56,10 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
     super.initState();
     _player = widget.player ?? MediaKitWizard();
     _initPlayer();
+    // 如果设置了始终显示控制栏，则初始状态也显示
+    if (widget.showAlwaysControls) {
+      _controlsVisible = true;
+    }
   }
 
   @override
@@ -94,6 +100,9 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   }
 
   void _startHideControlsTimer() {
+    // 如果设置了始终显示控制栏，则不启动隐藏定时器
+    if (widget.showAlwaysControls) return;
+
     _cancelHideControlsTimer();
     _hideControlsTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
@@ -140,59 +149,100 @@ class _WizardPlayerWidgetState extends State<WizardPlayerWidget> {
   // ───────────────────────────────────────────────────
   // 全屏模式：SizedBox.expand → Stack → overlay
   // ───────────────────────────────────────────────────
+  //
+  // 控制栏自动隐藏逻辑（优化版）：
+  // 1. 鼠标移动/进入时：若控制栏已隐藏则显示，同时重置隐藏计时器
+  // 2. 鼠标静置 3 秒后：自动隐藏控制栏
+  // 3. 优化点：只有状态变化时才调用 setState，避免频繁重建导致黑屏
+  // ───────────────────────────────────────────────────
   Widget _buildFullscreenLayout(Player? platformPlayer) {
-    return GestureDetector(
-      onTap: widget.showControls ? _toggleControls : null,
-      onDoubleTap: () {
-        if (!widget.showControls) return;
-        if (_player.playbackState.value == PlaybackState.playing) {
-          _player.pause();
-        } else {
-          _player.resume();
+    return MouseRegion(
+      // 控制栏隐藏时隐藏鼠标指针，提供更沉浸式的观看体验
+      cursor: widget.showControls && !_controlsVisible
+          ? SystemMouseCursors.none
+          : SystemMouseCursors.basic,
+      // 鼠标进入或移动时显示控制栏并重新启动隐藏定时器（桌面端）
+      onHover: (details) {
+        if (widget.showControls && !_controlsVisible) {
+          setState(() {
+            _controlsVisible = true;
+          });
         }
+        _startHideControlsTimer();
       },
-      onHorizontalDragStart: widget.showControls
-          ? _onHorizontalDragStart
-          : null,
-      onHorizontalDragUpdate: widget.showControls
-          ? _onHorizontalDragUpdate
-          : null,
-      onHorizontalDragEnd: widget.showControls ? _onHorizontalDragEnd : null,
-      child: SizedBox.expand(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            _buildVideoSurface(platformPlayer),
-            if (platformPlayer == null)
-              Container(
-                color: Colors.black,
-                child: const Center(
-                  child: Icon(
-                    Icons.play_circle_outline,
-                    size: 64,
-                    color: Colors.white30,
+      child: GestureDetector(
+        // 点击切换控制栏显示/隐藏
+        onTap: widget.showControls ? _toggleControls : null,
+        // 双击播放/暂停
+        onDoubleTap: () {
+          if (!widget.showControls) return;
+          if (_player.playbackState.value == PlaybackState.playing) {
+            _player.pause();
+          } else {
+            _player.resume();
+          }
+        },
+        // 触摸移动时显示控制栏并重新启动隐藏定时器（移动端）
+        onPanUpdate: (details) {
+          if (widget.showControls) {
+            setState(() {
+              _controlsVisible = true;
+            });
+            _startHideControlsTimer();
+          }
+        },
+        // 水平拖拽快进/快退
+        onHorizontalDragStart: widget.showControls
+            ? _onHorizontalDragStart
+            : null,
+        onHorizontalDragUpdate: widget.showControls
+            ? _onHorizontalDragUpdate
+            : null,
+        onHorizontalDragEnd: widget.showControls ? _onHorizontalDragEnd : null,
+        child: SizedBox.expand(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // 视频画面
+              _buildVideoSurface(platformPlayer),
+              // 播放器未就绪时显示的占位图
+              if (platformPlayer == null)
+                Container(
+                  color: Colors.black,
+                  child: const Center(
+                    child: Icon(
+                      Icons.play_circle_outline,
+                      size: 64,
+                      color: Colors.white30,
+                    ),
                   ),
                 ),
-              ),
-            // Loading
-            Obx(() {
-              if (_player.isBuffering.value ||
-                  _player.playbackState.value == PlaybackState.loading) {
-                return Container(
-                  color: Colors.black26,
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                );
-              }
-              return const SizedBox.shrink();
-            }),
-            // 快进提示
-            if (widget.showControls && _isHorizontalDragging)
-              _buildSeekIndicator(),
-            // 控制栏 overlay
-            if (widget.showControls) _buildFullscreenControlsOverlay(),
-          ],
+              // 加载中提示
+              Obx(() {
+                if (_player.isBuffering.value ||
+                    _player.playbackState.value == PlaybackState.loading) {
+                  return Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+              // 快进/快退提示
+              if (widget.showControls && _isHorizontalDragging)
+                _buildSeekIndicator(),
+              // 控制栏 overlay（带渐变动画）
+              if (widget.showControls)
+                AnimatedOpacity(
+                  opacity: _controlsVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: _buildFullscreenControlsOverlay(),
+                ),
+            ],
+          ),
         ),
       ),
     );

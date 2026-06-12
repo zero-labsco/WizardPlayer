@@ -18,6 +18,9 @@ dependencies:
   # GetX 状态管理
   get: ^4.7.3
 
+  # 窗口管理（桌面端全屏）
+  window_manager: ^0.5.1
+
   # 视频播放核心：media_kit（Windows/Linux/macOS/Android/iOS/Web 全平台）
   media_kit: ^1.2.6 # Primary package.
   media_kit_video: ^2.0.1 # For video rendering.

@@ -65,6 +65,9 @@ dependencies:
 
   # 路径提供者（用于获取临时目录）
   path_provider: ^2.1.2
+
+  # 窗口管理（桌面端全屏）
+  window_manager: ^0.5.1
   
   # 视频播放核心：media_kit（Windows/Linux/macOS/Android/iOS/Web 全平台）
   media_kit: ^1.2.6 # Primary package.

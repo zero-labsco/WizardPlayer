@@ -403,4 +403,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saturday => 'Saturday';
+
+  @override
+  String get paused => 'Paused';
+
+  @override
+  String get playing => 'Playing';
+
+  @override
+  String get seekBackward => '-10s';
+
+  @override
+  String get seekForward => '+10s';
+
+  @override
+  String volumePercent(int percent) {
+    return 'Volume $percent%';
+  }
+
+  @override
+  String get windowFullscreen => 'Window Fullscreen';
+
+  @override
+  String get exitWindowFullscreen => 'Exit Window Fullscreen';
+
+  @override
+  String get screenFullscreen => 'Screen Fullscreen (Esc to exit)';
+
+  @override
+  String get exitScreenFullscreen => 'Exit Screen Fullscreen';
+
+  @override
+  String get keyboardShortcuts => 'Keyboard Shortcuts';
+
+  @override
+  String get spacePlayPause => 'Space: Play/Pause';
+
+  @override
+  String get arrowKeysSeek => 'Arrow Keys: Seek/Volume';
+
+  @override
+  String get keyWWindowFullscreen => 'W: Window Fullscreen';
+
+  @override
+  String get keyFScreenFullscreen => 'F: Screen Fullscreen';
+
+  @override
+  String get keyEscExitFullscreen => 'Esc: Exit Fullscreen';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get playbackSpeed => 'Playback Speed';
+
+  @override
+  String get loadHistoryFailed => 'Failed to load history';
+
+  @override
+  String loadedPlayHistory(Object count) {
+    return 'Loaded $count play history records';
+  }
 }

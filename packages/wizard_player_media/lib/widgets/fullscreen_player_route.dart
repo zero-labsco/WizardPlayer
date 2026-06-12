@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:window_manager/window_manager.dart';
 import 'wizard_player_widget.dart';
 import '../player/wizard_player.dart';
 
@@ -18,14 +21,23 @@ import '../player/wizard_player.dart';
 /// - Route 的动画是 Flutter 框架层的，和 native 播放器生命周期解耦
 class FullscreenPlayerRoute extends StatefulWidget {
   final WizardPlayer player;
+  final FullscreenMode mode;
 
-  const FullscreenPlayerRoute({super.key, required this.player});
+  const FullscreenPlayerRoute({
+    super.key,
+    required this.player,
+    this.mode = FullscreenMode.window,
+  });
 
   @override
   State<FullscreenPlayerRoute> createState() => _FullscreenPlayerRouteState();
 }
 
 class _FullscreenPlayerRouteState extends State<FullscreenPlayerRoute> {
+  final FocusNode _focusNode = FocusNode();
+  // 保存原始窗口全屏状态，用于退出时恢复
+  bool _wasFullScreen = false;
+
   @override
   void initState() {
     super.initState();
@@ -34,16 +46,71 @@ class _FullscreenPlayerRouteState extends State<FullscreenPlayerRoute> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // 延迟请求焦点以确保键盘事件能被捕获
+    Timer(const Duration(milliseconds: 100), () {
+      _focusNode.requestFocus();
+    });
+
+    // 执行桌面端全屏操作
+    _enterFullscreen();
+  }
+
+  /// 进入全屏模式
+  /// - 屏幕全屏：使用系统级全屏 API，真正占据整个屏幕
+  /// - 窗口全屏：仅使用应用内全屏 Route，保留窗口边框
+  Future<void> _enterFullscreen() async {
+    try {
+      // 保存原始窗口状态
+      _wasFullScreen = await windowManager.isFullScreen();
+
+      if (widget.mode == FullscreenMode.screen) {
+        // 屏幕全屏：真正的系统级全屏，无窗口边框
+        await windowManager.setFullScreen(true);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+      } else {
+        // 窗口全屏：应用内全屏 Route（保留窗口边框）
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      }
+    } catch (_) {
+      // 忽略窗口管理操作的错误（在不支持的平台上）
+    }
+  }
+
+  /// 退出全屏模式，恢复原始窗口状态
+  Future<void> _exitFullscreen() async {
+    try {
+      if (widget.mode == FullscreenMode.screen) {
+        // 恢复屏幕全屏前的状态
+        await windowManager.setFullScreen(_wasFullScreen);
+      }
+    } catch (_) {
+      // 忽略窗口管理操作的错误（在不支持的平台上）
+    }
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
     // 退出全屏：恢复竖屏 + 正常系统 UI
     // controller 不 dispose，调用方负责（回到非全屏继续播放）
+    _exitFullscreen();
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
+  }
+
+  /// 处理键盘事件
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    // ESC键：退出全屏
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      Navigator.of(context).maybePop();
+      return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
   }
 
   @override
@@ -55,31 +122,47 @@ class _FullscreenPlayerRouteState extends State<FullscreenPlayerRoute> {
     // ═══════════════════════════════════════════════════════════
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SizedBox.expand(
-        child: WizardPlayerWidget(
-          key: const ValueKey('fullscreen_player'),
-          player: widget.player,
-          showControls: true,
-          onFullscreen: () {
-            // 点击全屏按钮 = 退出 Route
-            Navigator.of(context).maybePop();
-          },
-          isFullscreen: () => true,
+      body: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: _handleKeyEvent,
+        child: SizedBox.expand(
+          child: WizardPlayerWidget(
+            key: const ValueKey('fullscreen_player'),
+            player: widget.player,
+            showControls: true,
+            showAlwaysControls: false, // 允许控制栏自动隐藏
+            onFullscreen: () {
+              // 点击全屏按钮 = 退出 Route
+              Navigator.of(context).maybePop();
+            },
+            isFullscreen: () => true,
+          ),
         ),
       ),
     );
   }
 }
 
+/// 全屏模式枚举
+enum FullscreenMode {
+  /// 窗口全屏：应用内全屏 Route，保留窗口边框和标题栏
+  window,
+
+  /// 屏幕全屏：真正的系统级全屏，无窗口边框，独占整个屏幕
+  screen,
+}
+
 /// 启动全屏播放器的工具方法
 Future<void> showFullScreenPlayer(
   BuildContext context,
-  WizardPlayer player,
-) async {
+  WizardPlayer player, {
+  FullscreenMode mode = FullscreenMode.window,
+}) async {
   await Navigator.of(context).push(
     PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
-          FullscreenPlayerRoute(player: player),
+          FullscreenPlayerRoute(player: player, mode: mode),
       transitionDuration: const Duration(milliseconds: 200),
       reverseTransitionDuration: const Duration(milliseconds: 200),
       opaque: true,

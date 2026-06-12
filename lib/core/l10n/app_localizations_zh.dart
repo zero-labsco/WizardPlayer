@@ -398,4 +398,65 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get saturday => '周六';
+
+  @override
+  String get paused => '已暂停';
+
+  @override
+  String get playing => '播放中';
+
+  @override
+  String get seekBackward => '-10秒';
+
+  @override
+  String get seekForward => '+10秒';
+
+  @override
+  String volumePercent(int percent) {
+    return '音量 $percent%';
+  }
+
+  @override
+  String get windowFullscreen => '窗口全屏';
+
+  @override
+  String get exitWindowFullscreen => '退出窗口全屏';
+
+  @override
+  String get screenFullscreen => '屏幕全屏 (按Esc退出)';
+
+  @override
+  String get exitScreenFullscreen => '退出屏幕全屏';
+
+  @override
+  String get keyboardShortcuts => '键盘快捷键';
+
+  @override
+  String get spacePlayPause => '空格: 播放/暂停';
+
+  @override
+  String get arrowKeysSeek => '方向键: 快进快退/音量';
+
+  @override
+  String get keyWWindowFullscreen => 'W: 窗口全屏';
+
+  @override
+  String get keyFScreenFullscreen => 'F: 屏幕全屏';
+
+  @override
+  String get keyEscExitFullscreen => 'Esc: 退出全屏';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get playbackSpeed => '播放速度';
+
+  @override
+  String get loadHistoryFailed => '加载历史记录失败';
+
+  @override
+  String loadedPlayHistory(Object count) {
+    return '加载播放历史: $count 条';
+  }
 }

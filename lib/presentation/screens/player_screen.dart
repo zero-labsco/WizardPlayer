@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -38,6 +42,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   late final PlayerViewModel _viewModel;
   final FocusNode _focusNode = FocusNode();
 
+  String? _keyboardHint;
+  Timer? _hideHintTimer;
+  bool _isScreenFullscreen = false;
+
   @override
   void initState() {
     super.initState();
@@ -53,12 +61,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  void _showKeyboardHint(String hint) {
+    setState(() {
+      _keyboardHint = hint;
+    });
+    _hideHintTimer?.cancel();
+    _hideHintTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _keyboardHint = null;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _focusNode.dispose();
     _viewModel.onClose();
+    _hideHintTimer?.cancel();
     super.dispose();
   }
+
+  /// 获取多语言实例
+  AppLocalizations _l10n() => AppLocalizations.of(context)!;
 
   /// 处理键盘事件
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
@@ -66,13 +92,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
     final player = _viewModel.player;
     final isPlaying = player.playbackState.value == PlaybackState.playing;
+    final l10n = _l10n();
 
     // 空格键：播放/暂停
     if (event.logicalKey == LogicalKeyboardKey.space) {
       if (isPlaying) {
         player.pause();
+        _showKeyboardHint(l10n.paused);
       } else {
         player.resume();
+        _showKeyboardHint(l10n.playing);
       }
       return KeyEventResult.handled;
     }
@@ -82,6 +111,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       final newPosition =
           player.currentPosition.value - const Duration(seconds: 10);
       player.seekTo(newPosition.isNegative ? Duration.zero : newPosition);
+      _showKeyboardHint(l10n.seekBackward);
       return KeyEventResult.handled;
     }
 
@@ -91,6 +121,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           player.currentPosition.value + const Duration(seconds: 10);
       final maxPosition = player.duration.value;
       player.seekTo(newPosition > maxPosition ? maxPosition : newPosition);
+      _showKeyboardHint(l10n.seekForward);
       return KeyEventResult.handled;
     }
 
@@ -98,6 +129,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
       final newVolume = (player.volume.value + 0.1).clamp(0.0, 1.0);
       player.setVolume(newVolume);
+      _showKeyboardHint(l10n.volumePercent((newVolume * 100).round()));
       return KeyEventResult.handled;
     }
 
@@ -105,21 +137,76 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
       final newVolume = (player.volume.value - 0.1).clamp(0.0, 1.0);
       player.setVolume(newVolume);
+      _showKeyboardHint(l10n.volumePercent((newVolume * 100).round()));
       return KeyEventResult.handled;
     }
 
-    // F 键：切换全屏
+    // F 键：切换屏幕全屏
     if (event.logicalKey == LogicalKeyboardKey.keyF) {
-      _toggleFullScreen();
+      _toggleScreenFullscreen();
+      return KeyEventResult.handled;
+    }
+
+    // W 键：切换窗口全屏
+    if (event.logicalKey == LogicalKeyboardKey.keyW) {
+      _toggleWindowFullscreen();
       return KeyEventResult.handled;
     }
 
     // Esc 键：退出全屏（由全屏路由处理）
     if (event.logicalKey == LogicalKeyboardKey.escape) {
+      if (_isScreenFullscreen) {
+        _exitScreenFullscreen();
+        return KeyEventResult.handled;
+      }
       return KeyEventResult.ignored;
     }
 
     return KeyEventResult.ignored;
+  }
+
+  void _toggleWindowFullscreen() {
+    final l10n = _l10n();
+    _showKeyboardHint(l10n.windowFullscreen);
+    showFullScreenPlayer(
+      context,
+      _viewModel.player,
+      mode: FullscreenMode.window,
+    ).then((_) {
+      if (mounted) {
+        _showKeyboardHint(l10n.exitWindowFullscreen);
+      }
+    });
+  }
+
+  void _toggleScreenFullscreen() {
+    final l10n = _l10n();
+    setState(() {
+      _isScreenFullscreen = true;
+    });
+    _showKeyboardHint(l10n.screenFullscreen);
+    // 等待全屏 Route 关闭后重置状态
+    showFullScreenPlayer(
+      context,
+      _viewModel.player,
+      mode: FullscreenMode.screen,
+    ).then((_) {
+      if (mounted) {
+        setState(() {
+          _isScreenFullscreen = false;
+        });
+        _showKeyboardHint(l10n.exitScreenFullscreen);
+      }
+    });
+  }
+
+  void _exitScreenFullscreen() {
+    final l10n = _l10n();
+    setState(() {
+      _isScreenFullscreen = false;
+    });
+    _showKeyboardHint(l10n.exitScreenFullscreen);
+    Navigator.of(context).maybePop();
   }
 
   @override
@@ -183,7 +270,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: '返回',
+                    tooltip: _l10n().back,
                   ),
                   const Spacer(),
                 ],
@@ -207,7 +294,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               children: [
                                 WizardPlayerWidget(
                                   player: _viewModel.player,
-                                  onFullscreen: _toggleFullScreen,
+                                  onFullscreen: _toggleWindowFullscreen,
                                   isFullscreen: () => false,
                                   showControls: false,
                                   showProgressBar: false,
@@ -216,14 +303,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                 Obx(() {
                                   final isPlaying =
                                       _viewModel.player.playbackState.value ==
-                                          PlaybackState.playing;
+                                      PlaybackState.playing;
                                   if (!isPlaying) {
                                     return Center(
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.black54,
-                                          borderRadius:
-                                              BorderRadius.circular(60),
+                                          borderRadius: BorderRadius.circular(
+                                            60,
+                                          ),
                                         ),
                                         child: IconButton(
                                           icon: const Icon(
@@ -239,6 +327,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
                                   }
                                   return const SizedBox.shrink();
                                 }),
+                                // 键盘操作提示
+                                if (_keyboardHint != null)
+                                  Center(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      child: Text(
+                                        _keyboardHint!,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -296,7 +406,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   player.resume();
                 }
               },
-              tooltip: isPlaying ? '暂停' : '播放',
+              tooltip: isPlaying ? _l10n().pause : _l10n().play,
             );
           }),
 
@@ -313,7 +423,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               onPressed: _viewModel.hasPreviousEpisode
                   ? _viewModel.previousEpisode
                   : null,
-              tooltip: '上一集',
+              tooltip: _l10n().previous,
             ),
           ),
 
@@ -330,7 +440,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               onPressed: _viewModel.hasNextEpisode
                   ? _viewModel.nextEpisode
                   : null,
-              tooltip: '下一集',
+              tooltip: _l10n().next,
             ),
           ),
 
@@ -437,7 +547,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             return PopupMenuButton<double>(
               initialValue: speed,
               onSelected: (value) => player.setPlaybackSpeed(value),
-              tooltip: '播放速度',
+              tooltip: _l10n().playbackSpeed,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -462,11 +572,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
           const SizedBox(width: 8),
 
-          // 全屏按钮
+          // 全屏按钮：移动端只显示一种，桌面端显示两种
+          if (kIsWeb ||
+              Platform.isWindows ||
+              Platform.isLinux ||
+              Platform.isMacOS) ...[
+            // 窗口全屏按钮 - 仅桌面端
+            IconButton(
+              icon: const Icon(Icons.window, color: Colors.white, size: 24),
+              onPressed: _toggleWindowFullscreen,
+              tooltip: _l10n().keyWWindowFullscreen,
+            ),
+            const SizedBox(width: 4),
+          ],
+          // 屏幕全屏按钮 - 所有平台
           IconButton(
             icon: const Icon(Icons.fullscreen, color: Colors.white, size: 24),
-            onPressed: _toggleFullScreen,
-            tooltip: '全屏 (F)',
+            onPressed: _toggleScreenFullscreen,
+            tooltip:
+                kIsWeb ||
+                    Platform.isWindows ||
+                    Platform.isLinux ||
+                    Platform.isMacOS
+                ? _l10n().keyFScreenFullscreen
+                : _l10n().windowFullscreen,
           ),
         ],
       ),
@@ -504,7 +633,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             height: playerHeight,
             child: WizardPlayerWidget(
               player: _viewModel.player,
-              onFullscreen: _toggleFullScreen,
+              onFullscreen: _toggleWindowFullscreen,
               isFullscreen: () => false,
             ),
           ),
@@ -630,16 +759,5 @@ class _PlayerScreenState extends State<PlayerScreen> {
       return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     }
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  /// 切换全屏
-  ///
-  /// push 一个独立的全屏 Route，传入同一个 player 实例
-  /// Route 内部会：
-  /// - 创建全新的 WizardPlayerWidget（绑定同一个 controller）
-  /// - 设置横屏 + 沉浸式 UI
-  /// pop Route 后，回到这里，原有的 WizardPlayerWidget 继续渲染
-  void _toggleFullScreen() {
-    showFullScreenPlayer(context, _viewModel.player);
   }
 }
