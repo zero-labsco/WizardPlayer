@@ -224,7 +224,7 @@ jobs:
 
       - name: Package Windows build
         run: |
-          Compress-Archive -Path build/windows/x64/release/bundle/* -DestinationPath WizardPlayer_Windows.zip
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath WizardPlayer_Windows.zip
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
